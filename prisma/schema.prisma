@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Event {
+  id              Int      @id @default(autoincrement())
+  name            String
+  date            DateTime // ← Sin @db.DateTime
+  guests          Int
+  pricePerPlate   Float
+  total           Float
+  remainingBalance Float
+  remainingPlates Int
+  eventType       EventType @relation(fields: [eventTypeId], references: [id])
+  eventTypeId     Int
+  payments        Payment[]
+}
+
+model Payment {
+  id         Int      @id @default(autoincrement())
+  amount     Float
+  payerName  String   // Nombre de la persona que realizó el pago
+  date       String   // Fecha del pago como texto
+  eventId    Int
+  event      Event    @relation(fields: [eventId], references: [id])
+}
+
+model EventType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  color     String
+  events    Event[]
+}

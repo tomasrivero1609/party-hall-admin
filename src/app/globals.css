@@ -24,3 +24,44 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Estilos minimalistas para FullCalendar */
+.fc .fc-daygrid-day-frame {
+  padding: 0.5rem; /* Espaciado reducido */
+}
+
+
+.fc .fc-daygrid-event {
+  margin: 0.25rem 0; /* Espaciado entre eventos */
+  padding: 0.25rem 0.5rem; /* Padding interno de los eventos */
+  border-radius: 0.25rem; /* Bordes redondeados */
+  background-color: #e5f3ff; /* Color de fondo minimalista */
+  border: none; /* Sin bordes */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+}
+
+.fc .fc-daygrid-day-number {
+  font-size: 0.875rem; /* Tamaño de fuente más pequeño */
+  color: #333; /* Color de texto oscuro */
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.25rem; /* Título más pequeño */
+  font-weight: 600; /* Fuente semibold */
+  color: #333; /* Color de texto oscuro */
+}
+
+.fc .fc-button {
+  background-color: #fff; /* Botones blancos */
+  border: 1px solid #ddd; /* Borde ligero */
+  color: #333; /* Texto oscuro */
+  font-size: 0.875rem; /* Tamaño de fuente reducido */
+  padding: 0.25rem 0.5rem; /* Padding reducido */
+  border-radius: 0.25rem; /* Bordes redondeados */
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background-color: #007bff; /* Color primario al hacer clic */
+  border-color: #007bff; /* Borde del botón activo */
+  color: #fff; /* Texto blanco */
+}

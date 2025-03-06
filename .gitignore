@@ -18,7 +18,10 @@
 /out/
 
 # production
-/build
+node_modules/
+.env
+.next/
+build/
 
 # misc
 .DS_Store
@@ -39,3 +42,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
