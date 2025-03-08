@@ -1,4 +1,3 @@
-// src/app/(admin)/events/page.jsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,36 +5,47 @@ import EventList from "../components/EventList";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true); // Estado para manejar la carga
 
+  // Cargar los eventos desde el endpoint /api/event-list
   useEffect(() => {
-    fetch("/api/events")
+    fetch("/api/event-list")
       .then((res) => res.json())
-      .then((data) => setEvents(data));
+      .then((data) => {
+        setEvents(data); // Guarda los eventos en el estado
+        setLoading(false); // Finaliza la carga
+      })
+      .catch((error) => {
+        console.error("Error fetching events:", error);
+        setLoading(false); // Finaliza la carga incluso si hay un error
+      });
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      const response = await fetch(`/api/events?id=${id}`, { method: "DELETE" });
-      if (response.ok) {
-        alert("Evento eliminado exitosamente");
-        setEvents(events.filter((event) => event.id !== id));
-      } else {
-        alert("Error al eliminar el evento");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+  // Mensaje de carga
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16 text-center">
+        <div className="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent rounded-full text-blue-500" role="status" aria-label="loading">
+          <span className="sr-only">Cargando...</span>
+        </div>
+        <p className="text-gray-600 mt-2">Cargando eventos...</p>
+      </div>
+    );
+  }
 
-  const handleEdit = (event) => {
-    // Redirige a la página de edición
-    window.location.href = `/edit-event/${event.id}`;
-  };
+  // Si no hay eventos disponibles
+  if (!Array.isArray(events) || events.length === 0) {
+    return (
+      <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16 text-center">
+        <p className="text-gray-600">No hay eventos disponibles.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Lista de Eventos</h2>
-      <EventList events={events} onDelete={handleDelete} onEdit={handleEdit} />
+      <EventList events={events} />
     </div>
   );
 };

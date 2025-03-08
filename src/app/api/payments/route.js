@@ -3,26 +3,35 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Método GET: Obtener todos los pagos
-export async function GET() {
+// Método GET: Obtener pagos
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const eventId = searchParams.get("eventId"); // Obtener el ID del evento como parámetro
+
   try {
-    const payments = await prisma.payment.findMany({
-      select: {
-        id: true,
-        amount: true,
-        payerName: true,
-        date: true,
-        event: {
-          select: {
-            name: true, // Solo seleccionamos el nombre del evento
-          },
+    let payments;
+
+    if (eventId) {
+      // Si se proporciona un ID de evento, filtrar los pagos por ese evento
+      payments = await prisma.payment.findMany({
+        where: { eventId: parseInt(eventId) },
+        include: {
+          event: true, // Incluye el evento relacionado
         },
-      },
-    });
-    return Response.json(payments);
+      });
+    } else {
+      // Si no se proporciona un ID, obtener todos los pagos
+      payments = await prisma.payment.findMany({
+        include: {
+          event: true, // Incluye el evento relacionado
+        },
+      });
+    }
+
+    return Response.json(payments); // Devuelve la lista de pagos
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: 'Error fetching payments' }, { status: 500 });
+    console.error("Error fetching payments:", error);
+    return Response.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
 

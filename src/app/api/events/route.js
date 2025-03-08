@@ -2,23 +2,27 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Método GET: Obtener todos los eventos
-export async function GET() {
+// Método GET: Verificar disponibilidad de la fecha
+export async function GET(request) {
   try {
+    const url = new URL(request.url);
+    const date = url.searchParams.get("date"); // Obtener la fecha desde los parámetros de la URL
+
+    if (!date) {
+      return Response.json({ error: 'La fecha es obligatoria' }, { status: 400 });
+    }
+
+    // Buscar eventos con la misma fecha
     const events = await prisma.event.findMany({
-      include: { eventType: true, payments: true },
+      where: {
+        date: new Date(date), // Busca eventos con la misma fecha
+      },
     });
 
-    // Convierte las fechas a formato ISO
-    const formattedEvents = events.map((event) => ({
-      ...event,
-      date: event.date.toISOString(), // Convierte la fecha a ISO
-    }));
-
-    return Response.json(formattedEvents);
+    return Response.json(events); // Devuelve una lista de eventos (vacía si no hay coincidencias)
   } catch (error) {
-    console.error(error);
-    return Response.json({ error: 'Error fetching events' }, { status: 500 });
+    console.error('Error checking date availability:', error);
+    return Response.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -28,7 +32,7 @@ export async function POST(request) {
     const data = await request.json();
 
     // Validar datos básicamente
-    if (!data.name || !data.date || !data.guests || !data.pricePerPlate) {
+    if (!data.name || !data.date || !data.guests || !data.pricePerPlate || !data.eventTypeId) {
       return Response.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
     }
 
@@ -41,6 +45,20 @@ export async function POST(request) {
     }
     if (isNaN(pricePerPlate) || pricePerPlate <= 0) {
       return Response.json({ error: 'El precio por plato debe ser un número positivo' }, { status: 400 });
+    }
+
+    // Verificar si la fecha ya está ocupada
+    const existingEvent = await prisma.event.findFirst({
+      where: {
+        date: new Date(data.date), // Busca eventos con la misma fecha
+      },
+    });
+
+    if (existingEvent) {
+      return Response.json(
+        { error: `Fecha ocupada por "${existingEvent.name}"` },
+        { status: 400 }
+      );
     }
 
     // Crear el evento en la base de datos

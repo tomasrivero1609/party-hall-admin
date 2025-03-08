@@ -13,7 +13,7 @@ const CalendarPage = () => {
   // Función para cargar los eventos desde la API
   const fetchEvents = async () => {
     try {
-      const response = await fetch("/api/events");
+      const response = await fetch("/api/event-list");
       if (!response.ok) throw new Error("Error al cargar los eventos");
       
       const data = await response.json();

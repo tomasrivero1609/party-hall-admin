@@ -1,4 +1,3 @@
-// src/app/payments_list/page.jsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -42,54 +41,66 @@ const PaymentList = () => {
     ? payments.filter((payment) => payment.event?.name === selectedEventName)
     : payments;
 
-  if (loading) return <p>Cargando pagos...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-
   return (
     <div className="max-w-4xl mx-auto mt-8">
       <h3 className="text-2xl font-bold text-center text-gray-800 mb-6">Lista de Pagos</h3>
 
-      {/* Selector de nombre de evento */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2">Filtrar por nombre de evento:</label>
-        <select
-          value={selectedEventName}
-          onChange={(e) => setSelectedEventName(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-        >
-          <option value="">Todos los eventos</option>
-          {eventNames.map((eventName, index) => (
-            <option key={index} value={eventName}>
-              {eventName}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Spinner mientras se cargan los pagos */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+          <p className="mt-4 text-gray-600">Cargando pagos...</p>
+        </div>
+      )}
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="py-2 px-4 border">ID</th>
-            <th className="py-2 px-4 border">Evento</th>
-            <th className="py-2 px-4 border">Monto</th>
-            <th className="py-2 px-4 border">Pagador</th>
-            <th className="py-2 px-4 border">Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredPayments.map((payment) => (
-            <tr key={payment.id} className="hover:bg-gray-100">
-              <td className="py-2 px-4 border">{payment.id}</td>
-              <td className="py-2 px-4 border">
-                {payment.event?.name || "Sin evento"}
-              </td>
-              <td className="py-2 px-4 border">${payment.amount.toFixed(2)}</td>
-              <td className="py-2 px-4 border">{payment.payerName}</td>
-              <td className="py-2 px-4 border">{payment.date}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Mostrar errores si existen */}
+      {error && <p className="text-red-500 text-center">{error}</p>}
+
+      {/* Contenido principal */}
+      {!loading && !error && (
+        <>
+          {/* Selector de nombre de evento */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium mb-2">Filtrar por nombre de evento:</label>
+            <select
+              value={selectedEventName}
+              onChange={(e) => setSelectedEventName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+            >
+              <option value="">Todos los eventos</option>
+              {eventNames.map((eventName, index) => (
+                <option key={index} value={eventName}>
+                  {eventName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Tabla de pagos */}
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="py-2 px-4 border">Evento</th>
+                <th className="py-2 px-4 border">Monto</th>
+                <th className="py-2 px-4 border">Pagador</th>
+                <th className="py-2 px-4 border">Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPayments.map((payment) => (
+                <tr key={payment.id} className="hover:bg-gray-100">
+                  <td className="py-2 px-4 border">
+                    {payment.event?.name || "Sin evento"}
+                  </td>
+                  <td className="py-2 px-4 border">${payment.amount.toFixed(2)}</td>
+                  <td className="py-2 px-4 border">{payment.payerName}</td>
+                  <td className="py-2 px-4 border">{payment.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };
