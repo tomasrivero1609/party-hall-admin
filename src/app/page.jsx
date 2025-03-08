@@ -35,13 +35,14 @@ const HomePage = () => {
       <h1 className="text-5xl font-bold text-gray-800 mb-8 text-center">
         Bienvenido a <span className="text-blue-600">Salón de Eventos</span>
       </h1>
-      <DollarBlueQuote />
-
       {/* Descripción */}
       <p className="text-gray-600 text-lg max-w-2xl text-center mb-12">
         Organiza y administra tus eventos de manera sencilla. Desde la creación de eventos hasta el seguimiento de pagos,
         todo en un solo lugar.
       </p>
+      <div classname="mb-16">
+      <DollarBlueQuote />
+      </div>
 
       {/* Características */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl w-full">
