@@ -3,6 +3,7 @@
 
 import React from "react";
 import Link from "next/link";
+import DollarBlueQuote from "../app/components/DollarBlueQuote";
 import { useSession, signIn } from "next-auth/react";
 
 const HomePage = () => {
@@ -34,6 +35,7 @@ const HomePage = () => {
       <h1 className="text-5xl font-bold text-gray-800 mb-8 text-center">
         Bienvenido a <span className="text-blue-600">Salón de Eventos</span>
       </h1>
+      <DollarBlueQuote />
 
       {/* Descripción */}
       <p className="text-gray-600 text-lg max-w-2xl text-center mb-12">

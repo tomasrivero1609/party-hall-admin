@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Para redirigir al usuario
 import { z } from "zod"; // Importa Zod
+import { jsPDF } from "jspdf"; // Para generar PDFs
 
 // Esquema de validación
 const paymentSchema = z.object({
@@ -25,6 +26,7 @@ export default function PaymentForm() {
     payerName: "", // Inicializa el campo payerName
     date: "",
   });
+  const [lastPaymentData, setLastPaymentData] = useState(null); // Almacena los datos del último pago
   const [errors, setErrors] = useState({});
   const [events, setEvents] = useState([]); // Lista de eventos disponibles
   const [isLoadingEvents, setIsLoadingEvents] = useState(true); // Estado para la carga de eventos
@@ -39,6 +41,7 @@ export default function PaymentForm() {
         const response = await fetch("/api/event-list");
         if (response.ok) {
           const data = await response.json();
+          console.log("Eventos cargados:", data); // Depuración: Imprime los eventos
           setEvents(data);
         } else {
           console.error("Error fetching events");
@@ -74,6 +77,19 @@ export default function PaymentForm() {
       });
 
       if (response.ok) {
+        // Buscar el nombre del evento en la lista de eventos
+        const selectedEvent = events.find(
+          (event) => String(event.id) === String(formData.eventId)
+        ); // Normaliza los IDs a strings
+
+        console.log("Evento seleccionado:", selectedEvent); // Depuración: Imprime el evento encontrado
+
+        // Guardar los datos del último pago, incluyendo el nombre del evento
+        setLastPaymentData({
+          ...formData,
+          eventName: selectedEvent?.name || "Evento desconocido",
+        });
+
         // Muestra el mensaje de éxito
         setShowSuccessMessage(true);
 
@@ -100,6 +116,81 @@ export default function PaymentForm() {
     }
   };
 
+// Función para generar y descargar el recibo
+const generateReceipt = () => {
+  if (!lastPaymentData) return;
+
+  const doc = new jsPDF();
+
+  // Configuración inicial
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  const margin = 20; // Márgenes generales
+  let yPos = margin; // Posición vertical inicial
+
+  // Encabezado
+  doc.setFontSize(24);
+  doc.setTextColor("#2d3748"); // Color gris oscuro
+  doc.text("Recibo de Pago", pageWidth / 2, yPos, { align: "center" });
+  yPos += 15;
+
+  doc.setFontSize(12);
+  doc.setTextColor("#718096"); // Color gris claro
+  doc.text("Eventos Quilmes", pageWidth / 2, yPos, { align: "center" });
+  yPos += 20;
+
+  // Línea divisoria
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 10;
+
+  // Datos del recibo
+  const data = [
+    ["Evento:", lastPaymentData.eventName],
+    ["Monto:", `$${lastPaymentData.amount}`],
+    ["Pagador:", lastPaymentData.payerName],
+    ["Fecha:", lastPaymentData.date],
+  ];
+
+  // Estilo de la tabla
+  doc.setFontSize(14);
+  doc.setTextColor("#2d3748"); // Color gris oscuro
+  data.forEach(([label, value]) => {
+    doc.text(label, margin, yPos);
+    doc.text(value, pageWidth - margin, yPos, { align: "right" });
+    yPos += 10;
+  });
+
+  // Línea divisoria
+  yPos += 10;
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos, pageWidth - margin, yPos);
+  yPos += 10;
+
+  // Pie de página
+  doc.setFontSize(10);
+  doc.setTextColor("#718096"); // Color gris claro
+  doc.text("Gracias por su pago. Este recibo es válido como comprobante.", pageWidth / 2, yPos, {
+    align: "center",
+  });
+  yPos += 20;
+
+  // Firmas (alineadas horizontalmente)
+  doc.setFontSize(12);
+  doc.setTextColor("#2d3748"); // Color gris oscuro
+
+  // Firma del pagador
+  doc.text("Firma del Pagador:", margin, yPos);
+  doc.line(margin, yPos + 5, pageWidth / 2 - margin, yPos + 5); // Línea para la firma
+
+  // Firma del salón
+  doc.text("Firma del Salón:", pageWidth / 2 + margin, yPos);
+  doc.line(pageWidth / 2 + margin, yPos + 5, pageWidth - margin, yPos + 5); // Línea para la firma
+
+  // Guardar el archivo PDF
+  doc.save("recibo_pago.pdf");
+};
+
   // Redirige al usuario después de cerrar el mensaje de éxito
   const handleSuccessClose = () => {
     setShowSuccessMessage(false);
@@ -115,8 +206,14 @@ export default function PaymentForm() {
             <h3 className="text-xl font-bold text-green-600 mb-4">¡Felicitaciones!</h3>
             <p className="text-gray-700 mb-6">El pago ha sido registrado correctamente.</p>
             <button
+              onClick={generateReceipt}
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300 mr-4"
+            >
+              Descargar Recibo
+            </button>
+            <button
               onClick={handleSuccessClose}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
+              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-300"
             >
               Continuar
             </button>
