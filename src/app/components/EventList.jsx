@@ -3,16 +3,23 @@ import React, { useState } from "react";
 
 const EventList = ({ events }) => {
   const [filterEventType, setFilterEventType] = useState(""); // Filtro por tipo de evento
+  const [searchTerm, setSearchTerm] = useState(""); // Término de búsqueda por nombre
   const [currentPage, setCurrentPage] = useState(1); // Estado para la paginación
   const eventsPerPage = 6; // Número de eventos por página
 
   // Obtener la lista de tipos de eventos únicos (incluyendo aquellos sin eventos)
   const allEventTypes = [...new Set(events.map((event) => event.eventType?.name || "Sin tipo"))];
 
-  // Filtrar eventos según el tipo seleccionado
-  const filteredEvents = filterEventType
-    ? events.filter((event) => event.eventType?.name === filterEventType)
-    : events;
+  // Filtrar eventos según el tipo seleccionado y el término de búsqueda
+  const filteredEvents = events.filter((event) => {
+    const matchesEventType = filterEventType
+      ? event.eventType?.name === filterEventType
+      : true;
+    const matchesSearchTerm = searchTerm
+      ? event.name.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
+    return matchesEventType && matchesSearchTerm;
+  });
 
   // Paginación: Calcular eventos actuales
   const indexOfLastEvent = currentPage * eventsPerPage;
@@ -24,15 +31,16 @@ const EventList = ({ events }) => {
 
   return (
     <div>
-      {/* Filtro por tipo de evento */}
-      <div className="flex justify-between mb-6">
+      {/* Filtros */}
+      <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
+        {/* Filtro por tipo de evento */}
         <select
           value={filterEventType}
           onChange={(e) => {
             setFilterEventType(e.target.value);
             setCurrentPage(1); // Reiniciar a la primera página al filtrar
           }}
-          className="px-4 py-2 border border-gray-300 rounded-md"
+          className="px-4 py-2 border border-gray-300 rounded-md w-full md:w-auto"
         >
           <option value="">Todos los tipos</option>
           {allEventTypes.map((type, index) => (
@@ -41,6 +49,18 @@ const EventList = ({ events }) => {
             </option>
           ))}
         </select>
+
+        {/* Campo de búsqueda por nombre */}
+        <input
+          type="text"
+          placeholder="Buscar por nombre del evento..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1); // Reiniciar a la primera página al buscar
+          }}
+          className="px-4 py-2 border border-gray-300 rounded-md w-full md:w-auto"
+        />
       </div>
 
       {/* Lista de eventos */}
