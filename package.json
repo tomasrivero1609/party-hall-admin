@@ -28,6 +28,8 @@
     "next": "15.2.1",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",
+    "number-to-words": "^1.2.4",
+    "numero-a-letras": "^1.0.6",
     "prisma": "^6.4.1",
     "react": "^19.0.0",
     "react-big-calendar": "^1.18.0",

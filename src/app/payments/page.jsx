@@ -1,9 +1,10 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Para redirigir al usuario
 import { z } from "zod"; // Importa Zod
 import { jsPDF } from "jspdf"; // Para generar PDFs
+import getAmountInWords from "../convertidor";
+
 
 // Esquema de validación
 const paymentSchema = z.object({
@@ -52,7 +53,6 @@ export default function PaymentForm() {
         setIsLoadingEvents(false);
       }
     };
-
     fetchEvents();
   }, []);
 
@@ -64,35 +64,28 @@ export default function PaymentForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
       // Validar los datos usando Zod
       paymentSchema.parse(formData);
-
       // Enviar los datos al backend
       const response = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       if (response.ok) {
         // Buscar el nombre del evento en la lista de eventos
         const selectedEvent = events.find(
           (event) => String(event.id) === String(formData.eventId)
         ); // Normaliza los IDs a strings
-
         console.log("Evento seleccionado:", selectedEvent); // Depuración: Imprime el evento encontrado
-
         // Guardar los datos del último pago, incluyendo el nombre del evento
         setLastPaymentData({
           ...formData,
           eventName: selectedEvent?.name || "Evento desconocido",
         });
-
         // Muestra el mensaje de éxito
         setShowSuccessMessage(true);
-
         // Limpia el formulario
         setFormData({ eventId: "", amount: "0", payerName: "", date: "" });
         setErrors({});
@@ -116,80 +109,76 @@ export default function PaymentForm() {
     }
   };
 
-// Función para generar y descargar el recibo
-const generateReceipt = () => {
-  if (!lastPaymentData) return;
+  // Función para generar y descargar el recibo
+  const generateReceipt = () => {
+    if (!lastPaymentData) return;
+    const doc = new jsPDF();
+    // Configuración inicial
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 20; // Márgenes generales
+    let yPos = margin; // Posición vertical inicial
 
-  const doc = new jsPDF();
+    // Encabezado
+    doc.setFontSize(24);
+    doc.setTextColor("#2d3748"); // Color gris oscuro
+    doc.text("Recibo de Pago", pageWidth / 2, yPos, { align: "center" });
+    yPos += 15;
+    doc.setFontSize(12);
+    doc.setTextColor("#718096"); // Color gris claro
+    doc.text("Eventos Quilmes", pageWidth / 2, yPos, { align: "center" });
+    yPos += 20;
 
-  // Configuración inicial
-  const pageWidth = doc.internal.pageSize.width;
-  const pageHeight = doc.internal.pageSize.height;
-  const margin = 20; // Márgenes generales
-  let yPos = margin; // Posición vertical inicial
-
-  // Encabezado
-  doc.setFontSize(24);
-  doc.setTextColor("#2d3748"); // Color gris oscuro
-  doc.text("Recibo de Pago", pageWidth / 2, yPos, { align: "center" });
-  yPos += 15;
-
-  doc.setFontSize(12);
-  doc.setTextColor("#718096"); // Color gris claro
-  doc.text("Eventos Quilmes", pageWidth / 2, yPos, { align: "center" });
-  yPos += 20;
-
-  // Línea divisoria
-  doc.setLineWidth(0.5);
-  doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 10;
-
-  // Datos del recibo
-  const data = [
-    ["Evento:", lastPaymentData.eventName],
-    ["Monto:", `$${lastPaymentData.amount}`],
-    ["Pagador:", lastPaymentData.payerName],
-    ["Fecha:", lastPaymentData.date],
-  ];
-
-  // Estilo de la tabla
-  doc.setFontSize(14);
-  doc.setTextColor("#2d3748"); // Color gris oscuro
-  data.forEach(([label, value]) => {
-    doc.text(label, margin, yPos);
-    doc.text(value, pageWidth - margin, yPos, { align: "right" });
+    // Línea divisoria
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
     yPos += 10;
-  });
 
-  // Línea divisoria
-  yPos += 10;
-  doc.setLineWidth(0.5);
-  doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 10;
+    // Datos del recibo
+    const data = [
+      ["Evento:", lastPaymentData.eventName],
+      ["Monto:", `$${lastPaymentData.amount}`],
+      ["Monto en letras:", getAmountInWords(lastPaymentData.amount)], // Monto en letras
+      ["Pagador:", lastPaymentData.payerName],
+      ["Fecha:", lastPaymentData.date],
+    ];
 
-  // Pie de página
-  doc.setFontSize(10);
-  doc.setTextColor("#718096"); // Color gris claro
-  doc.text("Gracias por su pago. Este recibo es válido como comprobante.", pageWidth / 2, yPos, {
-    align: "center",
-  });
-  yPos += 20;
+    // Estilo de la tabla
+    doc.setFontSize(14);
+    doc.setTextColor("#2d3748"); // Color gris oscuro
+    data.forEach(([label, value]) => {
+      doc.text(label, margin, yPos);
+      doc.text(value, pageWidth - margin, yPos, { align: "right" });
+      yPos += 10;
+    });
 
-  // Firmas (alineadas horizontalmente)
-  doc.setFontSize(12);
-  doc.setTextColor("#2d3748"); // Color gris oscuro
+    // Línea divisoria
+    yPos += 10;
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 10;
 
-  // Firma del pagador
-  doc.text("Firma del Pagador:", margin, yPos);
-  doc.line(margin, yPos + 5, pageWidth / 2 - margin, yPos + 5); // Línea para la firma
+    // Pie de página
+    doc.setFontSize(10);
+    doc.setTextColor("#718096"); // Color gris claro
+    doc.text("Gracias por su pago. Este recibo es válido como comprobante.", pageWidth / 2, yPos, {
+      align: "center",
+    });
+    yPos += 20;
 
-  // Firma del salón
-  doc.text("Firma del Salón:", pageWidth / 2 + margin, yPos);
-  doc.line(pageWidth / 2 + margin, yPos + 5, pageWidth - margin, yPos + 5); // Línea para la firma
+    // Firmas (alineadas horizontalmente)
+    doc.setFontSize(12);
+    doc.setTextColor("#2d3748"); // Color gris oscuro
+    // Firma del pagador
+    doc.text("Firma del Pagador:", margin, yPos);
+    doc.line(margin, yPos + 5, pageWidth / 2 - margin, yPos + 5); // Línea para la firma
+    // Firma del salón
+    doc.text("Firma del Salón:", pageWidth / 2 + margin, yPos);
+    doc.line(pageWidth / 2 + margin, yPos + 5, pageWidth - margin, yPos + 5); // Línea para la firma
 
-  // Guardar el archivo PDF
-  doc.save("recibo_pago.pdf");
-};
+    // Guardar el archivo PDF
+    doc.save("recibo_pago.pdf");
+  };
 
   // Redirige al usuario después de cerrar el mensaje de éxito
   const handleSuccessClose = () => {
@@ -220,7 +209,6 @@ const generateReceipt = () => {
           </div>
         </div>
       )}
-
       {/* Spinner mientras se cargan los eventos */}
       {isLoadingEvents ? (
         <div className="flex flex-col items-center justify-center h-64">
