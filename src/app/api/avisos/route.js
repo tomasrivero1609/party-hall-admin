@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path";
 
 // Configuración de Nodemailer
 const transporter = nodemailer.createTransport({
@@ -25,13 +23,14 @@ export async function POST(request) {
       return NextResponse.json({ error: "Todos los campos son obligatorios" }, { status: 400 });
     }
 
-    // Guardar el archivo adjunto (si existe)
-    let filePath = null;
+    // Procesar el archivo adjunto (si existe)
+    let attachment = null;
     if (file) {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const fileName = `${Date.now()}-${file.name}`;
-      filePath = path.join(process.cwd(), "public/uploads", fileName);
-      fs.writeFileSync(filePath, buffer);
+      attachment = {
+        filename: file.name,
+        content: buffer, // El archivo se adjunta directamente desde la memoria
+      };
     }
 
     // Enviar el correo electrónico
@@ -40,7 +39,7 @@ export async function POST(request) {
       to: email,
       subject: "Quilmes Eventos",
       text: message,
-      attachments: filePath ? [{ filename: file.name, path: filePath }] : [],
+      attachments: attachment ? [attachment] : [], // Adjuntar el archivo si existe
     };
 
     await transporter.sendMail(mailOptions);
