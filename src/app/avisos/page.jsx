@@ -30,7 +30,7 @@ const AvisosPage = () => {
 
       const data = await response.json();
       if (response.ok) {
-        setSuccessMessage(data.message);
+        setSuccessMessage("Aviso enviado con éxito.");
         setEmail("");
         setMessage("");
         setFile(null);
@@ -38,7 +38,6 @@ const AvisosPage = () => {
         setErrorMessage(data.error || "Ocurrió un error al enviar el aviso.");
       }
     } catch (error) {
-      console.error("Error al enviar el aviso:", error);
       setErrorMessage("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
@@ -46,81 +45,61 @@ const AvisosPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      {/* Contenedor principal */}
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
-        {/* Encabezado */}
-        <div>
-          <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-6">📢 Enviar Aviso</h2>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-300 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-lg w-full space-y-6 bg-white p-8 rounded-2xl shadow-xl">
+        <h2 className="text-2xl font-bold text-center text-gray-900">Enviar Aviso</h2>
 
-        {/* Mensaje de éxito */}
         {successMessage && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-            <span className="block sm:inline">{successMessage}</span>
+          <div className="p-4 text-green-800 bg-green-100 border border-green-400 rounded-md text-center">
+            {successMessage}
           </div>
         )}
 
-        {/* Mensaje de error */}
         {errorMessage && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-            <span className="block sm:inline">{errorMessage}</span>
+          <div className="p-4 text-red-800 bg-red-100 border border-red-400 rounded-md text-center">
+            {errorMessage}
           </div>
         )}
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-6">
-          {/* Correo electrónico */}
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Correo Electrónico
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
             <input
               type="email"
-              id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
 
-          {/* Mensaje */}
           <div>
-            <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-              Mensaje
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Mensaje</label>
             <textarea
-              id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows="4"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
               required
             ></textarea>
           </div>
 
-          {/* Archivo adjunto */}
           <div>
-            <label htmlFor="file" className="block text-sm font-medium text-gray-700">
-              Adjuntar Recibo
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Adjuntar Documento</label>
             <input
               type="file"
-              id="file"
               onChange={(e) => setFile(e.target.files[0])}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="mt-1 w-full text-sm text-gray-500 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
             />
           </div>
 
-          {/* Botón de envío */}
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-6 rounded-lg shadow-md transition duration-300 ${
+            className={`w-full py-3 rounded-lg shadow-md text-white font-bold transition duration-300 ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 text-white"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Enviando..." : "Enviar Aviso"}
