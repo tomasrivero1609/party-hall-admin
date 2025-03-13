@@ -1,5 +1,5 @@
 "use client";
-
+import * as XLSX from "xlsx";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
@@ -65,6 +65,27 @@ const PaymentListById = () => {
 
   // Calcular el número total de páginas
   const totalPages = Math.ceil(payments.length / itemsPerPage);
+  const exportToExcel = (payments) => {
+    // Crear un array con los encabezados y los datos
+    const data = [
+      ["ID", "Nombre del Pagador", "Monto", "Fecha"], // Encabezados
+      ...payments.map((payment) => [
+        payment.payerName,
+        payment.amount,
+        payment.date,
+      ]),
+    ];
+  
+    // Crear una hoja de cálculo
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+  
+    // Crear un libro de Excel
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Pagos");
+  
+    // Generar el archivo Excel
+    XLSX.writeFile(workbook, "pagos_evento.xlsx");
+  };
 
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16">
@@ -132,6 +153,12 @@ const PaymentListById = () => {
           className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
         >
           Agregar Pago
+        </button>
+        <button
+          onClick={() => exportToExcel(payments)} // Llama a la función para exportar
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+        >
+          Exportar a Excel
         </button>
       </div>
     </div>
