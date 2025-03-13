@@ -40,7 +40,7 @@ const CurrencyQuote = () => {
   if (error) return null;
 
   return (
-    <div className="p-3 bg-white shadow-lg rounded-lg border border-gray-300 z-50 text-sm">
+    <div className="p-3 bg-white shadow-lg rounded-lg border border-gray-300 z-50 text-sm mb-6">
       <h2 className="text-md font-semibold text-center text-blue-600">Cotización</h2>
       <table className="w-full mt-2 border-collapse">
         <thead>
