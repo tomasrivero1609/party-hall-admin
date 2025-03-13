@@ -59,3 +59,16 @@ body {
   border-color: #007bff; /* Borde del botón activo */
   color: #fff; /* Texto blanco */
 }
+
+/* Agrega estos estilos en tu archivo CSS global o en el archivo correspondiente de Tailwind */
+.custom-event {
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+  transition: transform 0.3s ease-in-out;
+}
+
+.custom-event:hover {
+  transform: scale(1.05); /* Escala ligeramente el evento al pasar el cursor */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Sombra más fuerte al hacer hover */
+}
+

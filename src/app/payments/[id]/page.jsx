@@ -34,7 +34,18 @@ export default function PaymentForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  
+    if (name === "amount") {
+      // Mantener el valor sin formato en el estado
+      const numericValue = value.replace(/\D/g, ""); // Solo números
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+  
+      // Mostrar el valor formateado en el input
+      e.target.value = formatAmount(numericValue);
+    } else {
+      // Para otros campos, actualizar normalmente
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -152,6 +163,12 @@ export default function PaymentForm() {
     router.push(`/payments_list/${id}`); // Redirige a la lista de pagos del evento específico
   };
 
+  const formatAmount = (value) => {
+    if (!value) return ""; // Manejar valores vacíos
+    const numericValue = value.replace(/\D/g, ""); // Eliminar caracteres no numéricos
+    return new Intl.NumberFormat("es-AR").format(numericValue); // Formatear con separadores
+  };
+
   return (
     <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg mt-16">
       {showSuccessMessage && (
@@ -175,13 +192,13 @@ export default function PaymentForm() {
         <div className="mb-4">
           <label className="block text-gray-700 font-medium mb-2">Monto del Pago</label>
           <input
-            type="number"
-            name="amount"
-            placeholder="Monto del pago"
-            value={formData.amount}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
+              type="text" // Cambiamos de "number" a "text" para permitir el formato
+              name="amount"
+              placeholder="Monto del pago"
+              value={formatAmount(formData.amount)} // Mostrar el valor formateado
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            />
           {errors.amount && <p className="text-red-500 text-sm">{errors.amount}</p>}
         </div>
 

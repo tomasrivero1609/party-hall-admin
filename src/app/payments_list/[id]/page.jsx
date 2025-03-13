@@ -53,6 +53,14 @@ const PaymentListById = () => {
     );
   }
 
+  // Función para formatear montos
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: "ARS",
+    }).format(amount);
+  };
+
   // Calcular los pagos a mostrar en la página actual
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -65,13 +73,14 @@ const PaymentListById = () => {
 
   // Calcular el número total de páginas
   const totalPages = Math.ceil(payments.length / itemsPerPage);
+
   const exportToExcel = (payments) => {
     // Crear un array con los encabezados y los datos
     const data = [
-      ["ID", "Nombre del Pagador", "Monto", "Fecha"], // Encabezados
+      ["Nombre del Pagador", "Monto", "Fecha"], // Encabezados
       ...payments.map((payment) => [
         payment.payerName,
-        payment.amount,
+        formatCurrency(payment.amount), // Formatear monto
         payment.date,
       ]),
     ];
@@ -79,12 +88,78 @@ const PaymentListById = () => {
     // Crear una hoja de cálculo
     const worksheet = XLSX.utils.aoa_to_sheet(data);
   
+    // Aplicar estilos a la hoja de cálculo
+    applyStyles(worksheet, data);
+  
     // Crear un libro de Excel
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pagos");
   
     // Generar el archivo Excel
     XLSX.writeFile(workbook, "pagos_evento.xlsx");
+  };
+
+  const applyStyles = (worksheet, data) => {
+    // Estilo para los encabezados
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" } }, // Texto blanco
+      fill: { fgColor: { rgb: "4F81BD" } }, // Fondo azul
+      alignment: { horizontal: "center" },
+      border: {
+        top: { style: "thin", color: { auto: 1 } },
+        bottom: { style: "thin", color: { auto: 1 } },
+        left: { style: "thin", color: { auto: 1 } },
+        right: { style: "thin", color: { auto: 1 } },
+      },
+    };
+  
+    // Estilo para las filas pares
+    const evenRowStyle = {
+      fill: { fgColor: { rgb: "DDEBF7" } }, // Fondo azul claro
+      alignment: { horizontal: "center" },
+      border: {
+        top: { style: "thin", color: { auto: 1 } },
+        bottom: { style: "thin", color: { auto: 1 } },
+        left: { style: "thin", color: { auto: 1 } },
+        right: { style: "thin", color: { auto: 1 } },
+      },
+    };
+  
+    // Estilo para las filas impares
+    const oddRowStyle = {
+      fill: { fgColor: { rgb: "FFFFFF" } }, // Fondo blanco
+      alignment: { horizontal: "center" },
+      border: {
+        top: { style: "thin", color: { auto: 1 } },
+        bottom: { style: "thin", color: { auto: 1 } },
+        left: { style: "thin", color: { auto: 1 } },
+        right: { style: "thin", color: { auto: 1 } },
+      },
+    };
+  
+    // Aplicar estilo a los encabezados
+    for (let col = 0; col < data[0].length; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col }); // Fila 0, columna col
+      worksheet[cellAddress].s = headerStyle;
+    }
+  
+    // Aplicar estilo a las filas de datos
+    for (let row = 1; row < data.length; row++) {
+      for (let col = 0; col < data[row].length; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!worksheet[cellAddress]) {
+          worksheet[cellAddress] = { v: "" }; // Crear la celda si no existe
+        }
+        worksheet[cellAddress].s = row % 2 === 0 ? evenRowStyle : oddRowStyle; // Alternar estilos
+      }
+    }
+  
+    // Ajustar el ancho de las columnas
+    worksheet["!cols"] = [
+      { wch: 30 }, // Ancho para "Nombre del Pagador"
+      { wch: 15 }, // Ancho para "Monto"
+      { wch: 15 }, // Ancho para "Fecha"
+    ];
   };
 
   return (
@@ -96,7 +171,7 @@ const PaymentListById = () => {
         {currentItems.map((payment) => (
           <div key={payment.id} className="bg-gray-100 p-4 rounded-lg shadow-md">
             <p className="text-gray-600">Nombre del Pagador: {payment.payerName}</p>
-            <p className="text-gray-600">Monto: ${payment.amount}</p>
+            <p className="text-gray-600">Monto: {formatCurrency(payment.amount)}</p> {/* Formatear monto */}
             <p className="text-gray-600">Fecha: {payment.date}</p>
           </div>
         ))}

@@ -195,6 +195,25 @@ const CreateEventForm = () => {
           />
           {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
         </div>
+        
+        {/* Tipo de Evento */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Tipo de Evento</label>
+          <select
+            name="eventTypeId"
+            value={formData.eventTypeId}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">Selecciona un tipo de evento</option>
+            {eventTypes.map((eventType) => (
+              <option key={eventType.id} value={eventType.id}>
+                {eventType.name}
+              </option>
+            ))}
+          </select>
+          {errors.eventTypeId && <p className="text-red-500 text-sm">{errors.eventTypeId}</p>}
+        </div>
 
         {/* Fecha del Evento */}
         <div>
@@ -241,24 +260,6 @@ const CreateEventForm = () => {
           {errors.pricePerPlate && <p className="text-red-500 text-sm">{errors.pricePerPlate}</p>}
         </div>
 
-        {/* Tipo de Evento */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">Tipo de Evento</label>
-          <select
-            name="eventTypeId"
-            value={formData.eventTypeId}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Selecciona un tipo de evento</option>
-            {eventTypes.map((eventType) => (
-              <option key={eventType.id} value={eventType.id}>
-                {eventType.name}
-              </option>
-            ))}
-          </select>
-          {errors.eventTypeId && <p className="text-red-500 text-sm">{errors.eventTypeId}</p>}
-        </div>
 
         {/* Botón de Envío */}
         <button

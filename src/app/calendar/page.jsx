@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Paper, Typography } from "@mui/material";
+import { Paper, Typography, TextField } from "@mui/material";
 
 const theme = createTheme({
   palette: {
@@ -20,8 +20,11 @@ const theme = createTheme({
 
 const CalendarPage = () => {
   const [events, setEvents] = useState([]);
+  const [selectedMonthYear, setSelectedMonthYear] = useState(null);
+  const [calendarApi, setCalendarApi] = useState(null);
 
-  const fetchEvents = async () => {
+  // Obtener los eventos
+  const fetchEvents = useCallback(async () => {
     try {
       const response = await fetch("/api/event-list");
       if (!response.ok) throw new Error("Error al cargar los eventos");
@@ -46,23 +49,70 @@ const CalendarPage = () => {
     } catch (error) {
       console.error("Error al cargar los eventos:", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
+
+  // Función para manejar el cambio de mes y año
+  const handleMonthYearChange = (e) => {
+    const date = e.target.value;
+    setSelectedMonthYear(date);
+  };
+
+  // Filtrar los eventos por el mes y año seleccionados
+  const filteredEvents = selectedMonthYear
+    ? events.filter((event) => {
+        const eventMonthYear = event.start.substring(0, 7); // El formato es YYYY-MM
+        return eventMonthYear === selectedMonthYear;
+      })
+    : events;
+
+  // Función para actualizar la vista de FullCalendar según la fecha seleccionada
+  useEffect(() => {
+    if (calendarApi && selectedMonthYear) {
+      const [year, month] = selectedMonthYear.split("-");
+      const targetDate = new Date(year, month - 1); // El mes en FullCalendar es 0-indexed
+      requestAnimationFrame(() => {
+        calendarApi.gotoDate(targetDate); // Cambiar la fecha al mes/año seleccionado
+      });
+    }
+  }, [selectedMonthYear, calendarApi]);
 
   return (
     <ThemeProvider theme={theme}>
       <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
-        <Typography variant="h4" color="primary" className="mb-4 font-bold text-center">
+        {/* Título minimalista */}
+        <Typography
+          variant="h5"  // Cambié el tamaño del título a h5 para hacerlo más pequeño
+          color="primary"
+          className="mb-8 font-bold text-center"
+        >
           Calendario de Eventos
         </Typography>
+
+        {/* Input de búsqueda para seleccionar mes y año */}
+        <div className="flex items-center mb-6 mt-6 w-full max-w-xs">  {/* Ajusté el margen inferior */}
+          <TextField
+            type="month"
+            value={selectedMonthYear || ""}
+            onChange={handleMonthYearChange}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            label="Seleccionar mes y año"
+            className="mr-4"
+          />
+        </div>
+
         <Paper elevation={3} className="w-full max-w-5xl p-6 rounded-lg">
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            events={events}
+            events={filteredEvents} // Usar los eventos filtrados por mes y año
             eventContent={({ event }) => (
               <div className="text-xs text-white font-medium">
                 <strong>{event.title}</strong>
@@ -71,9 +121,9 @@ const CalendarPage = () => {
               </div>
             )}
             headerToolbar={{
-              left: "prev,next today", // Botones de navegación
-              center: "title", // Título del calendario
-              right: "dayGridMonth", // Solo vista mensual
+              left: "prev,next today",
+              center: "title", // El título se actualizará automáticamente
+              right: "dayGridMonth",
             }}
             editable={true}
             selectable={true}
@@ -82,8 +132,14 @@ const CalendarPage = () => {
             height="auto"
             contentHeight="auto"
             themeSystem="standard"
-            aspectRatio={1.5} // Mejora la visualización en dispositivos móviles
+            aspectRatio={1.5}
             className="rounded-lg"
+            eventClassNames="custom-event"
+            locale="es" // Establecer el idioma a español
+            datesSet={(info) => {
+              // Guardamos la referencia de la API de FullCalendar
+              if (!calendarApi) setCalendarApi(info.view.calendar);
+            }}
           />
         </Paper>
       </div>
