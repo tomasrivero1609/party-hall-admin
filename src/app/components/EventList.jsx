@@ -29,6 +29,11 @@ const EventList = ({ events }) => {
   // Cambiar de página
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  // Función para formatear números con separadores de miles
+  const formatNumber = (number) => {
+    return number.toLocaleString("es-CL"); // Formato para Chile (usar "." como separador de miles)
+  };
+
   return (
     <div>
       {/* Filtros */}
@@ -80,12 +85,14 @@ const EventList = ({ events }) => {
                   Tipo: {event.eventType?.name || "Sin tipo"}
                 </p>
                 <p className="text-gray-600 mt-1">Invitados: {event.guests}</p>
-                <p className="text-gray-600 mt-1">Total: ${event.total}</p>
                 <p className="text-gray-600 mt-1">
-                  Precio por Plato: ${event.pricePerPlate}
+                  Total: ${formatNumber(event.total)} {/* Formateado */}
                 </p>
                 <p className="text-gray-600 mt-1">
-                  Saldo Restante: ${event.remainingBalance}
+                  Precio por Plato: ${formatNumber(event.pricePerPlate)} {/* Formateado */}
+                </p>
+                <p className="text-gray-600 mt-1">
+                  Saldo Restante: ${formatNumber(event.remainingBalance)} {/* Formateado */}
                 </p>
                 <Link
                   href={`/payments_list/${event.id}`}

@@ -231,7 +231,7 @@ export default function PaymentForm() {
               <option value="">Selecciona un evento</option>
               {events.map((event) => (
                 <option key={event.id} value={event.id}>
-                  {event.name} (Saldo restante: ${event.remainingBalance})
+                  {event.name} ({event.date})
                 </option>
               ))}
             </select>

@@ -39,9 +39,19 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
+      {/* Contenedor principal */}
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6 text-center">
+        {/* Foto/Logo */}
+        <div className="mb-4">
+          <img
+            src="/logo_quilmes.png" // Reemplaza esto con la ruta de tu imagen
+            alt="Logo"
+            className="w-24 h-24 mx-auto rounded-full object-cover"
+          />
+        </div>
+
         {/* Título */}
-        <h2 className="text-2xl font-bold text-center text-gray-800">Iniciar Sesión</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Iniciar Sesión</h2>
 
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -86,7 +96,7 @@ export default function LoginPage() {
           </div>
 
           {/* Mensaje de error */}
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           {/* Botón de inicio de sesión */}
           <button

@@ -5,7 +5,7 @@ import Providers from "./providers"; // Importa el componente Providers
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="bg-gray-100 min-h-screen">
+      <body className="">
 
         {/* Envuelve toda la aplicación con el componente Providers */}
         <Providers>

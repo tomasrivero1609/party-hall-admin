@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Paper, Typography } from "@mui/material";
@@ -26,7 +25,7 @@ const CalendarPage = () => {
     try {
       const response = await fetch("/api/event-list");
       if (!response.ok) throw new Error("Error al cargar los eventos");
-      
+
       const data = await response.json();
 
       const formattedEvents = data.map((event) => ({
@@ -56,12 +55,12 @@ const CalendarPage = () => {
   return (
     <ThemeProvider theme={theme}>
       <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
-        <Typography variant="h4" color="primary" className="mb-4 font-bold">
+        <Typography variant="h4" color="primary" className="mb-4 font-bold text-center">
           Calendario de Eventos
         </Typography>
         <Paper elevation={3} className="w-full max-w-5xl p-6 rounded-lg">
           <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             events={events}
             eventContent={({ event }) => (
@@ -72,9 +71,9 @@ const CalendarPage = () => {
               </div>
             )}
             headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
+              left: "prev,next today", // Botones de navegación
+              center: "title", // Título del calendario
+              right: "dayGridMonth", // Solo vista mensual
             }}
             editable={true}
             selectable={true}
@@ -83,6 +82,7 @@ const CalendarPage = () => {
             height="auto"
             contentHeight="auto"
             themeSystem="standard"
+            aspectRatio={1.5} // Mejora la visualización en dispositivos móviles
             className="rounded-lg"
           />
         </Paper>

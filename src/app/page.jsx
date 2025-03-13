@@ -1,4 +1,3 @@
-// src/app/page.jsx
 "use client";
 
 import React from "react";
@@ -35,13 +34,9 @@ const HomePage = () => {
       <h1 className="text-5xl font-bold text-gray-800 mb-8 text-center">
         Bienvenido a <span className="text-blue-600">Salón de Eventos</span>
       </h1>
-      
-      <div className="mb-4">
-      <DollarBlueQuote />
-      </div>
 
       {/* Descripción */}
-      <p className="text-gray-600 text-lg max-w-2xl text-center mb-16 mt-8">
+      <p className="text-gray-600 text-lg max-w-2xl text-center mb-12">
         Organiza y administra tus eventos de manera sencilla. Desde la creación de eventos hasta el seguimiento de pagos,
         todo en un solo lugar.
       </p>

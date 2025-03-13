@@ -9,8 +9,8 @@ const CreateEventPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
       <div className="max-w-3xl w-full bg-white p-10 rounded-2xl shadow-xl">
-        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">Crear Nuevo Evento</h2>
-        <DolarBlue/>
+        <h2 className="text-4xl font-bold text-gray-800 mb-8 text-center">Nueva creación</h2>
+        <DolarBlue />
         <CreateEventForm />
       </div>
     </div>
