@@ -149,7 +149,7 @@ export default function PaymentForm() {
 
   const handleSuccessClose = () => {
     setShowSuccessMessage(false);
-    router.push("/payments_list"); // Redirige después del éxito
+    router.push(`/payments_list/${id}`); // Redirige a la lista de pagos del evento específico
   };
 
   return (

@@ -183,7 +183,7 @@ export default function PaymentForm() {
   // Redirige al usuario después de cerrar el mensaje de éxito
   const handleSuccessClose = () => {
     setShowSuccessMessage(false);
-    router.push("/payments_list"); // Redirige a la página de pagos
+    router.push("/events"); // Redirige a la página de Eventos
   };
 
   return (
