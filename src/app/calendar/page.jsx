@@ -121,7 +121,7 @@ const CalendarPage = () => {
               </div>
             )}
             headerToolbar={{
-              left: "prev,next today",
+              left: "prev,next",
               center: "title", // El título se actualizará automáticamente
               right: "dayGridMonth",
             }}
