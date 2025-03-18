@@ -22,7 +22,7 @@ const Navbar = () => {
           {/* Enlaces de Navegación */}
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6 items-center justify-center sm:justify-start">
             <Link
-              href="/events"
+              href="/eventsdetails"
               className="text-gray-600 hover:text-blue-600 transition duration-300"
             >
               Eventos

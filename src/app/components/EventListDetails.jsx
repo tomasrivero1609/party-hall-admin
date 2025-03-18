@@ -8,7 +8,7 @@ const EventList = ({ events: initialEvents }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false); // Estado para el loading
   const [events, setEvents] = useState(initialEvents); // Estado para los eventos originales
-  const eventsPerPage = 6;
+  const eventsPerPage = 10;
 
   // Validación de datos
   if (!Array.isArray(events)) {
@@ -125,49 +125,63 @@ const EventList = ({ events: initialEvents }) => {
       {filteredEvents.length === 0 ? (
         <p className="text-center text-gray-600">No hay eventos disponibles.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentEvents.map((event) => {
-            const formattedDate = event.date && event.date.split("-").length === 3
-              ? `${event.date.split("-")[2]}/${event.date.split("-")[1]}/${event.date.split("-")[0]}`
-              : "Fecha no disponible";
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Nombre</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Fecha</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Tipo</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Invitados</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Total</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Saldo</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {currentEvents.map((event) => {
+                const formattedDate = event.date && event.date.split("-").length === 3
+                  ? `${event.date.split("-")[2]}/${event.date.split("-")[1]}/${event.date.split("-")[0]}`
+                  : "Fecha no disponible";
 
-            return (
-              <div key={event.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 cursor-pointer">
-                <h3 className="text-xl font-bold text-gray-800">{event.name}</h3>
-                <p className="text-gray-600 mt-2">Fecha: {formattedDate}</p>
-                <p className="text-gray-600 mt-1">
-                  Tipo: {event.eventType?.name || "Sin tipo"}
-                </p>
-                <p className="text-gray-600 mt-1">Invitados: {event.guests}</p>
-                <p className="text-gray-600 mt-1">
-                  Total: ${formatNumber(event.total)}
-                </p>
-                <p className="text-gray-600 mt-1">
-                  Precio por Plato: ${formatNumber(event.pricePerPlate)}
-                </p>
-                <p className="text-gray-600 mt-1">
-                  Saldo Restante: ${formatNumber(event.remainingBalance)}
-                </p>
-                <Link href={`/payments_list/${event.id}`} className="text-blue-800 mt-1 block">
-                  Ver registros de pago
-                </Link>
+                return (
+                  <tr key={event.id} className="hover:bg-gray-50 transition duration-300">
+                    <td className="py-3 px-4 text-sm text-gray-800">{event.name}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{formattedDate}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{event.eventType?.name || "Sin tipo"}</td>
+                    <td className="py-3 px-4 text-sm text-gray-600">{event.guests}</td>
+                    <td className="py-3 px-4 text-sm text-gray-800 font-medium">
+                      ${formatNumber(event.total)}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-800 font-medium">
+                    ${formatNumber(event.remainingBalance)}
+                    </td>
 
-                {/* Botón de Eliminar con ícono */}
-                <button
-                  onClick={() => deleteEvent(event.id)}
-                  disabled={loading} // Desactivar el botón mientras se elimina
-                  className={`mt-4 p-2 rounded-md transition duration-300 ${
-                    loading
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-red-500 text-white hover:bg-red-600"
-                  }`}
-                  title="Eliminar Evento" // Añadimos un título para mejorar la accesibilidad
-                >
-                  <TrashIcon className="h-6 w-6" />
-                </button>
-              </div>
-            );
-          })}
+                    <td className="py-3 px-4 text-sm flex items-center space-x-4">
+                      <Link
+                        href={`/payments_list/${event.id}`}
+                        className="text-blue-600 hover:text-blue-800 transition duration-300"
+                      >
+                        Ver pagos
+                      </Link>
+                      <button
+                        onClick={() => deleteEvent(event.id)}
+                        disabled={loading}
+                        className={`p-1 rounded-md transition duration-300 ${
+                          loading
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-red-500 text-white hover:bg-red-600"
+                        }`}
+                        title="Eliminar Evento"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
