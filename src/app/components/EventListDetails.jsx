@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React, { useState, useMemo } from "react";
-import { TrashIcon } from "@heroicons/react/24/solid"; // Importamos el ícono de Heroicons
+import { TrashIcon, EnvelopeIcon, CreditCardIcon } from "@heroicons/react/24/solid"; // Usamos EnvelopeIcon
 
 const EventList = ({ events: initialEvents }) => {
   const [filterEventType, setFilterEventType] = useState("");
@@ -76,7 +76,7 @@ const EventList = ({ events: initialEvents }) => {
   return (
     <div>
       {/* Filtros */}
-      <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between mb-6 gap-4 ">
         <select
           value={filterEventType}
           onChange={(e) => {
@@ -154,16 +154,32 @@ const EventList = ({ events: initialEvents }) => {
                       ${formatNumber(event.total)}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-800 font-medium">
-                    ${formatNumber(event.remainingBalance)}
+                      ${formatNumber(event.remainingBalance)}
                     </td>
 
                     <td className="py-3 px-4 text-sm flex items-center space-x-4">
+                        <Link
+                            href={`/payments_list/${event.id}`}
+                            className={`p-1 rounded-md transition duration-300 flex items-center justify-center ${
+                                loading
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-500 text-white hover:bg-blue-600"
+                            }`}
+                            title="Ver pagos"
+                            >
+                            <CreditCardIcon className="h-5 w-5" />
+                        </Link>
                       <Link
-                        href={`/payments_list/${event.id}`}
-                        className="text-blue-600 hover:text-blue-800 transition duration-300"
-                      >
-                        Ver pagos
-                      </Link>
+                        href="/avisos" // Redirigimos a la página general de avisos
+                        className={`p-1 rounded-md transition duration-300 ${
+                            loading
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-green-500 text-white hover:bg-green-600"
+                        }`}
+                        title="Enviar Aviso"
+                        >
+                        <EnvelopeIcon className="h-5 w-5" />
+                        </Link>
                       <button
                         onClick={() => deleteEvent(event.id)}
                         disabled={loading}

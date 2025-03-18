@@ -11,7 +11,7 @@ const HomePage = () => {
   // Si no hay sesión, muestra la pantalla de inicio de sesión
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-blue-50">
         <h1 className="text-5xl font-bold text-gray-800 mb-6 text-center">
           Bienvenido a <span className="text-blue-600">Salón de Eventos</span>
         </h1>
@@ -29,7 +29,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-8">
+    <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-8">
       {/* Encabezado */}
       <h1 className="text-5xl font-bold text-gray-800 mb-8 text-center">
         Bienvenido a <span className="text-blue-600">Salón de Eventos</span>
