@@ -19,5 +19,5 @@ export async function middleware(request) {
 
 // Aplicar middleware solo a rutas protegidas
 export const config = {
-  matcher: ['/events', '/calendar', '/create-event', '/payments', '/dashboard'],
+  matcher: ['/events','/eventsdetails', '/calendar', '/create-event', '/payments', '/dashboard'],
 }
