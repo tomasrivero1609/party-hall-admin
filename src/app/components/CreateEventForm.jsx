@@ -1,10 +1,9 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Para redirigir al usuario
 import { z } from "zod"; // Importa Zod
 
-// Define el esquema de validación
+// Define el esquema de validación actualizado
 const eventSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio"),
   date: z.string().min(1, "La fecha es obligatoria"),
@@ -16,7 +15,16 @@ const eventSchema = z.object({
     .string()
     .refine((val) => !isNaN(parseFloat(val)), "Debe ser un número")
     .refine((val) => parseFloat(val) > 0, "El precio debe ser mayor a cero"),
-  eventTypeId: z.string().min(1, "El tipo de evento es obligatorio"), // Añadimos validación para eventTypeId
+  eventTypeId: z.string().min(1, "El tipo de evento es obligatorio"),
+  menu: z.string().optional(), // Menú (opcional)
+  observations: z.string().optional(), // Observaciones (opcional)
+  startTime: z.string().min(1, "La hora de inicio es obligatoria"), // Hora de inicio
+  endTime: z.string().min(1, "La hora de finalización es obligatoria"), // Hora de finalización
+  phone: z.string().min(1, "El teléfono es obligatorio"),
+  email: z.string().email("Debe ser un correo válido"),
+  address: z.string().min(1, "La dirección es obligatoria"),
+  familyNames: z.string().optional(), // Nombre de familiares (opcional)
+  sellerId: z.string().min(1, "El vendedor es obligatorio"), // Añade esta línea
 });
 
 const CreateEventForm = () => {
@@ -25,15 +33,42 @@ const CreateEventForm = () => {
     date: "",
     guests: "0",
     pricePerPlate: "0",
-    eventTypeId: "", // Inicialmente vacío
+    eventTypeId: "",
+    sellerId: "", // Inicialmente vacío
+    menu: "",
+    observations: "",
+    startTime: "",
+    endTime: "",
+    phone: "",
+    email: "",
+    address: "",
+    familyNames: "",
   });
-
   const [errors, setErrors] = useState({});
   const [eventTypes, setEventTypes] = useState([]); // Estado para almacenar los tipos de eventos
   const [dateError, setDateError] = useState(""); // Estado para errores de fecha
   const [isLoading, setIsLoading] = useState(false); // Estado para manejar la carga
   const [showSuccessMessage, setShowSuccessMessage] = useState(false); // Estado para el mensaje de éxito
   const router = useRouter(); // Para redirigir al usuario
+
+  const [sellers, setSellers] = useState([]); // Estado para almacenar los vendedores
+
+useEffect(() => {
+  const fetchSellers = async () => {
+    try {
+      const response = await fetch("/api/sellers");
+      if (response.ok) {
+        const data = await response.json();
+        setSellers(data); // Guarda los vendedores en el estado
+      } else {
+        console.error("Error fetching sellers");
+      }
+    } catch (error) {
+      console.error("Error fetching sellers:", error);
+    }
+  };
+  fetchSellers();
+}, []);
 
   // Cargar los tipos de eventos desde la API
   useEffect(() => {
@@ -50,7 +85,6 @@ const CreateEventForm = () => {
         console.error("Error fetching event types:", error);
       }
     };
-
     fetchEventTypes();
   }, []);
 
@@ -84,28 +118,23 @@ const CreateEventForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       // Valida los datos usando el esquema de Zod
       eventSchema.parse(formData);
-
       // Verifica nuevamente la disponibilidad de la fecha antes de enviar
       if (dateError) {
         alert("No se puede crear el evento porque la fecha ya está ocupada.");
         return;
       }
-
       // Si pasa la validación, envía los datos al backend
       const response = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       if (response.ok) {
         // Muestra el mensaje de éxito
         setShowSuccessMessage(true);
-
         // Limpia el formulario
         setFormData({
           name: "",
@@ -113,6 +142,14 @@ const CreateEventForm = () => {
           guests: "0",
           pricePerPlate: "0",
           eventTypeId: "",
+          menu: "",
+          observations: "",
+          startTime: "",
+          endTime: "",
+          phone: "",
+          email: "",
+          address: "",
+          familyNames: "",
         });
         setDateError("");
         setErrors({});
@@ -147,23 +184,27 @@ const CreateEventForm = () => {
       !formData.date ||
       !formData.guests ||
       !formData.pricePerPlate ||
-      !formData.eventTypeId
+      !formData.eventTypeId ||
+      !formData.startTime ||
+      !formData.endTime ||
+      !formData.phone ||
+      !formData.email ||
+      !formData.address
     );
   };
 
   // Redirige al usuario después de cerrar el mensaje de éxito
   const handleSuccessClose = () => {
     setShowSuccessMessage(false);
-    router.push("/events"); // Redirige a la página de eventos
+    router.push("/eventsdetails"); // Redirige a la página de eventos
   };
 
   return (
     <div>
       {/* Fondo desenfocado cuando el mensaje de éxito está visible */}
       {showSuccessMessage && (
-        <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm z-40"></div>
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm z-40"></div>
       )}
-
       {/* Mensaje de éxito */}
       {showSuccessMessage && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -179,7 +220,6 @@ const CreateEventForm = () => {
           </div>
         </div>
       )}
-
       {/* Formulario */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Nombre del Evento */}
@@ -195,7 +235,7 @@ const CreateEventForm = () => {
           />
           {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
         </div>
-        
+
         {/* Tipo de Evento */}
         <div>
           <label className="block text-gray-700 font-medium mb-2">Tipo de Evento</label>
@@ -232,6 +272,32 @@ const CreateEventForm = () => {
           {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
         </div>
 
+        {/* Hora de Inicio y Finalización */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Hora de Inicio</label>
+          <input
+            type="time"
+            name="startTime"
+            value={formData.startTime}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {errors.startTime && <p className="text-red-500 text-sm">{errors.startTime}</p>}
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Hora de Finalización</label>
+          <input
+            type="time"
+            name="endTime"
+            value={formData.endTime}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {errors.endTime && <p className="text-red-500 text-sm">{errors.endTime}</p>}
+        </div>
+        </div>
+
         {/* Número de Invitados */}
         <div>
           <label className="block text-gray-700 font-medium mb-2">Número de Invitados</label>
@@ -260,6 +326,107 @@ const CreateEventForm = () => {
           {errors.pricePerPlate && <p className="text-red-500 text-sm">{errors.pricePerPlate}</p>}
         </div>
 
+        {/* Menú y Observaciones */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Menú (Opcional)</label>
+            <textarea
+              name="menu"
+              placeholder="Escribe el menú aquí..."
+              value={formData.menu}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            ></textarea>
+            {errors.menu && <p className="text-red-500 text-sm">{errors.menu}</p>}
+          </div>
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Observaciones (Opcional)</label>
+            <textarea
+              name="observations"
+              placeholder="Escribe observaciones aquí..."
+              value={formData.observations}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            ></textarea>
+            {errors.observations && <p className="text-red-500 text-sm">{errors.observations}</p>}
+          </div>
+        </div>
+
+        {/* Datos del Cliente */}
+        <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Datos del Cliente</h2>
+
+        {/* Teléfono */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Teléfono</label>
+          <input
+            type="text"
+            name="phone"
+            placeholder="Teléfono"
+            value={formData.phone}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
+        </div>
+
+        {/* Mail */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Mail</label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Correo electrónico"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+        </div>
+
+        {/* Dirección */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Dirección</label>
+          <input
+            type="text"
+            name="address"
+            placeholder="Dirección"
+            value={formData.address}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
+        </div>
+
+        {/* Nombre de Familiares */}
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Nombre de Familiares (Opcional)</label>
+          <input
+            type="text"
+            name="familyNames"
+            placeholder="Nombres de familiares"
+            value={formData.familyNames}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {errors.familyNames && <p className="text-red-500 text-sm">{errors.familyNames}</p>}
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium mb-2">Vendedor</label>
+          <select
+            name="sellerId"
+            value={formData.sellerId}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="">Selecciona un vendedor</option>
+            {sellers.map((seller) => (
+              <option key={seller.id} value={seller.id}>
+                {seller.name}
+              </option>
+            ))}
+          </select>
+          {errors.sellerId && <p className="text-red-500 text-sm">{errors.sellerId}</p>}
+        </div>
 
         {/* Botón de Envío */}
         <button

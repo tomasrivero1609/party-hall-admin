@@ -7,7 +7,8 @@ export async function GET() {
   try {
     const events = await prisma.event.findMany({
       include: {
-        eventType: true, // Incluye el tipo de evento relacionado
+        eventType: true,
+        seller: true, // Incluye el vendedor
       },
     });
 

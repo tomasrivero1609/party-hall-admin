@@ -32,7 +32,7 @@ export async function POST(request) {
     const data = await request.json();
 
     // Validar datos básicamente
-    if (!data.name || !data.date || !data.guests || !data.pricePerPlate || !data.eventTypeId) {
+    if (!data.name || !data.date || !data.guests || !data.pricePerPlate || !data.eventTypeId || !data.sellerId) {
       return Response.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
     }
 
@@ -50,7 +50,7 @@ export async function POST(request) {
     // Verificar si la fecha ya está ocupada
     const existingEvent = await prisma.event.findFirst({
       where: {
-        date: new Date(data.date), // Busca eventos con la misma fecha
+        date: new Date(data.date),
       },
     });
 
@@ -60,6 +60,17 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    // Convertir startTime y endTime en objetos Date válidos
+    const startDate = new Date(data.date); // Fecha base
+    const [startHours, startMinutes] = data.startTime.split(":").map(Number);
+    const [endHours, endMinutes] = data.endTime.split(":").map(Number);
+
+    const startTime = new Date(startDate);
+    startTime.setHours(startHours, startMinutes, 0, 0);
+
+    const endTime = new Date(startDate);
+    endTime.setHours(endHours, endMinutes, 0, 0);
 
     // Crear el evento en la base de datos
     const event = await prisma.event.create({
@@ -72,6 +83,15 @@ export async function POST(request) {
         remainingBalance: guests * pricePerPlate,
         remainingPlates: guests,
         eventTypeId: parseInt(data.eventTypeId),
+        sellerId: parseInt(data.sellerId),
+        menu: data.menu || "",
+        observations: data.observations || "",
+        startTime: startTime, // Usar el objeto Date válido
+        endTime: endTime,     // Usar el objeto Date válido
+        phone: data.phone || "",
+        email: data.email || "",
+        address: data.address || "",
+        familyNames: data.familyNames || "",
       },
     });
 

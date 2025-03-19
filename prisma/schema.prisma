@@ -8,10 +8,16 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Seller {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique // Nombre del vendedor (único)
+  events  Event[]  // Relación: Un vendedor puede tener muchos eventos
+}
+
 model Event {
   id              Int      @id @default(autoincrement())
   name            String
-  date            DateTime // ← Sin @db.DateTime
+  date            DateTime
   guests          Int
   pricePerPlate   Float
   total           Float
@@ -19,7 +25,19 @@ model Event {
   remainingPlates Int
   eventType       EventType @relation(fields: [eventTypeId], references: [id])
   eventTypeId     Int
+  seller          Seller?    @relation(fields: [sellerId], references: [id]) // Relación opcional
+  sellerId        Int?       // Hacer el campo opcional temporalmente
   payments        Payment[]
+  
+  // Nuevos campos
+  menu            String?   // Menú - Opcional
+  observations    String?   // Observaciones - Opcional
+  startTime       DateTime? // Hora de inicio - Opcional
+  endTime         DateTime? // Hora de finalización - Opcional
+  phone           String?   // Teléfono - Opcional
+  email           String?   // Mail - Opcional
+  address         String?   // Dirección - Opcional
+  familyNames     String?   // Nombre de familiares - Opcional
 }
 
 model Payment {
