@@ -66,6 +66,14 @@ const EventList = ({ events: initialEvents }) => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const getDaysSince = (date) => {
+    const today = new Date();
+    const targetDate = new Date(date);
+    const timeDifference = today - targetDate;
+    const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24)); // Diferencia en días
+    return daysDifference;
+  };
+
   const formatNumber = (number) => number.toLocaleString("es-CL");
 
   // Función para eliminar un evento
@@ -185,6 +193,9 @@ const EventList = ({ events: initialEvents }) => {
                   Saldo
                 </th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                  Último pago
+                </th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
                   Acciones
                 </th>
               </tr>
@@ -195,8 +206,24 @@ const EventList = ({ events: initialEvents }) => {
                   ? `${event.date.split("-")[2]}/${event.date.split("-")[1]}/${event.date.split("-")[0]}`
                   : "Fecha no disponible";
 
+                // Determinar la fecha de referencia (último pago o fecha de creación)
+                const referenceDate = event.lastPaymentDate || event.date;
+
+                // Calcular los días transcurridos desde la fecha de referencia
+                const daysSinceLastActivity = referenceDate ? getDaysSince(referenceDate) : null;
+
+                // Formatear la fecha del último pago
+                const lastPaymentFormatted = event.lastPaymentDate
+                  ? new Date(event.lastPaymentDate).toLocaleDateString("es-AR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : "N/A";
+
                 return (
                   <tr key={event.id} className="hover:bg-gray-50 transition duration-300">
+                    {/* Columnas existentes */}
                     <td className="py-3 px-4 text-sm text-gray-800">{event.name}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{formattedDate}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">
@@ -209,6 +236,17 @@ const EventList = ({ events: initialEvents }) => {
                     <td className="py-3 px-4 text-sm text-gray-800 font-medium">
                       ${formatNumber(event.remainingBalance)}
                     </td>
+                    {/* Nueva columna para recordatorios */}
+                    <td className="py-3 px-4 text-sm text-gray-600">
+                      {daysSinceLastActivity >= 50 ? (
+                        <span className="text-yellow-600 font-semibold">
+                          {lastPaymentFormatted}. ¡Recuerda pagar pronto!
+                        </span>
+                      ) : (
+                        <span className="text-green-600">Al día</span>
+                      )}
+                    </td>
+                    {/* Acciones */}
                     <td className="py-3 px-4 text-sm flex items-center space-x-4">
                       <Link
                         href={`/payments_list/${event.id}`}
@@ -244,7 +282,6 @@ const EventList = ({ events: initialEvents }) => {
                       >
                         <TrashIcon className="h-5 w-5" />
                       </button>
-                      {/* Botón para ver detalles */}
                       <button
                         onClick={() => openDetailsModal(event)}
                         className="p-1 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 transition duration-300"
@@ -252,30 +289,28 @@ const EventList = ({ events: initialEvents }) => {
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
-                    {/* Botón de WhatsApp */}
-                    {event.phone && (
-                      <a
-                        href={`https://wa.me/${"+549" + event.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hola, quería consultar sobre el evento.")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition duration-300"
-                        title="Enviar mensaje por WhatsApp"
-                      >
-                        {/* Ícono de WhatsApp */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
+                      {event.phone && (
+                        <a
+                          href={`https://wa.me/${"+549" + event.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hola, quería consultar sobre el evento.")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition duration-300"
+                          title="Enviar mensaje por WhatsApp"
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-9a1 1 0 10-2 0v3H7a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V9z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </a>
-                    )}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-9a1 1 0 10-2 0v3H7a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V9z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </a>
+                      )}
                     </td>
                   </tr>
                 );

@@ -1,9 +1,10 @@
-"use client";
+"use client"; // Asegúrate de que el archivo esté marcado como un componente del lado del cliente
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-const AvisosPage = () => {
+const AvisosPageContent = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
@@ -120,6 +121,15 @@ const AvisosPage = () => {
         </form>
       </div>
     </div>
+  );
+};
+
+// Envolver el contenido en un Suspense Boundary
+const AvisosPage = () => {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AvisosPageContent />
+    </Suspense>
   );
 };
 

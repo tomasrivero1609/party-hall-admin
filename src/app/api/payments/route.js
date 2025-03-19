@@ -81,15 +81,16 @@ export async function POST(request) {
 
     console.log("Pago creado:", payment); // Depuración
 
-    // Actualizar el saldo restante del evento
+    // Actualizar el saldo restante y la fecha del último pago del evento
     await prisma.event.update({
       where: { id: parseInt(data.eventId) },
       data: {
         remainingBalance: event.remainingBalance - amount,
+        lastPaymentDate: new Date(), // Actualizar la fecha del último pago
       },
     });
 
-    console.log("Saldo actualizado"); // Depuración
+    console.log("Saldo y fecha del último pago actualizados"); // Depuración
 
     return Response.json(payment, { status: 201 });
   } catch (error) {
