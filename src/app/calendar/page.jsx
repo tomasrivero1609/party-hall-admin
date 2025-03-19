@@ -1,36 +1,38 @@
-"use client";
-
+'use client'
 import React, { useEffect, useState, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { Paper, Typography, TextField } from "@mui/material";
+import {
+  Paper,
+  Typography,
+  TextField,
+  Modal,
+  Box,
+  Button,
+} from "@mui/material";
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#1a73e8",
-    },
-    secondary: {
-      main: "#34a853",
-    },
+    primary: { main: "#1a73e8" },
+    secondary: { main: "#34a853" },
   },
 });
 
 const CalendarPage = () => {
   const [events, setEvents] = useState([]);
   const [selectedMonthYear, setSelectedMonthYear] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [calendarApi, setCalendarApi] = useState(null);
 
-  // Obtener los eventos
   const fetchEvents = useCallback(async () => {
     try {
       const response = await fetch("/api/event-list");
       if (!response.ok) throw new Error("Error al cargar los eventos");
 
       const data = await response.json();
-
       const formattedEvents = data.map((event) => ({
         id: event.id.toString(),
         title: event.name,
@@ -40,8 +42,14 @@ const CalendarPage = () => {
         borderColor: "#1a73e8",
         textColor: "#fff",
         extendedProps: {
-          total: event.total,
           guests: event.guests,
+          total: event.total,
+          remainingBalance: event.remainingBalance,
+          address: event.address,
+          phone: event.phone,
+          observations: event.observations,
+          seller: event.seller ? event.seller.name : "No asignado",
+          eventType: event.eventType ? event.eventType.name : "Sin tipo",
         },
       }));
 
@@ -55,93 +63,101 @@ const CalendarPage = () => {
     fetchEvents();
   }, [fetchEvents]);
 
-  // Función para manejar el cambio de mes y año
   const handleMonthYearChange = (e) => {
     const date = e.target.value;
     setSelectedMonthYear(date);
+    if (calendarApi) {
+      const [year, month] = date.split("-");
+      calendarApi.gotoDate(new Date(year, month - 1));
+    }
   };
 
-  // Filtrar los eventos por el mes y año seleccionados
-  const filteredEvents = selectedMonthYear
-    ? events.filter((event) => {
-        const eventMonthYear = event.start.substring(0, 7); // El formato es YYYY-MM
-        return eventMonthYear === selectedMonthYear;
-      })
-    : events;
-
-  // Función para actualizar la vista de FullCalendar según la fecha seleccionada
   useEffect(() => {
     if (calendarApi && selectedMonthYear) {
       const [year, month] = selectedMonthYear.split("-");
-      const targetDate = new Date(year, month - 1); // El mes en FullCalendar es 0-indexed
-      requestAnimationFrame(() => {
-        calendarApi.gotoDate(targetDate); // Cambiar la fecha al mes/año seleccionado
-      });
+      calendarApi.gotoDate(new Date(year, month - 1));
     }
   }, [selectedMonthYear, calendarApi]);
 
+  const handleEventClick = (clickInfo) => {
+    setSelectedEvent(clickInfo.event);
+    setOpenModal(true);
+  };
+
   return (
     <ThemeProvider theme={theme}>
-      <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
-        {/* Título minimalista */}
-        <Typography
-          variant="h5"  // Cambié el tamaño del título a h5 para hacerlo más pequeño
-          color="primary"
-          className="mb-8 font-bold text-center"
-        >
+      <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
+        <Typography variant="h5" color="primary" className="mb-6 font-bold text-center">
           Calendario de Eventos
         </Typography>
 
-        {/* Input de búsqueda para seleccionar mes y año */}
-        <div className="flex items-center mb-6 mt-6 w-full max-w-xs">  {/* Ajusté el margen inferior */}
+        <div className="flex items-center mb-4 w-full max-w-xs">
           <TextField
             type="month"
             value={selectedMonthYear || ""}
             onChange={handleMonthYearChange}
             fullWidth
             variant="outlined"
-            InputLabelProps={{
-              shrink: true,
-            }}
-            label="Seleccionar mes y año"
-            className="mr-4"
+            label=""
           />
         </div>
 
-        <Paper elevation={3} className="w-full max-w-5xl p-6 rounded-lg">
+        <Paper elevation={3} className="w-full max-w-5xl p-4 rounded-lg overflow-hidden">
           <FullCalendar
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            events={filteredEvents} // Usar los eventos filtrados por mes y año
-            eventContent={({ event }) => (
-              <div className="text-xs text-white font-medium">
-                <strong>{event.title}</strong>
-                <br />
-                <span>Invitados: {event.extendedProps.guests}</span>
-              </div>
+            events={events.filter(event =>
+              selectedMonthYear ? event.start.substring(0, 7) === selectedMonthYear : true
             )}
+            eventClick={handleEventClick}
             headerToolbar={{
               left: "prev,next",
-              center: "title", // El título se actualizará automáticamente
+              center: "title",
               right: "dayGridMonth",
             }}
-            editable={true}
-            selectable={true}
-            selectMirror={true}
-            dayMaxEvents={true}
-            height="auto"
-            contentHeight="auto"
-            themeSystem="standard"
-            aspectRatio={1.5}
-            className="rounded-lg"
-            eventClassNames="custom-event"
-            locale="es" // Establecer el idioma a español
+            locale="es"
             datesSet={(info) => {
-              // Guardamos la referencia de la API de FullCalendar
               if (!calendarApi) setCalendarApi(info.view.calendar);
             }}
+            height="auto"
+            contentHeight="auto"
           />
         </Paper>
+
+        <Modal open={openModal} onClose={() => setOpenModal(false)}>
+          <Box sx={{ 
+            position: "absolute", 
+            top: "50%", 
+            left: "50%", 
+            transform: "translate(-50%, -50%)", 
+            width: "90%", 
+            maxWidth: 400, 
+            bgcolor: "background.paper", 
+            boxShadow: 24, 
+            p: 3, 
+            borderRadius: 2, 
+            maxHeight: "80vh", 
+            overflowY: "auto" 
+          }}>
+            {selectedEvent && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  {selectedEvent.title}
+                </Typography>
+                <Typography variant="body1"><strong>Fecha:</strong> {selectedEvent.start.toISOString().substring(0, 10)}</Typography>
+                <Typography variant="body1"><strong>Tipo de evento:</strong> {selectedEvent.extendedProps.eventType}</Typography>
+                <Typography variant="body1"><strong>Vendedor:</strong> {selectedEvent.extendedProps.seller}</Typography>
+                <Typography variant="body1"><strong>Invitados:</strong> {selectedEvent.extendedProps.guests}</Typography>
+                <Typography variant="body1"><strong>Total:</strong> ${selectedEvent.extendedProps.total}</Typography>
+                <Typography variant="body1"><strong>Saldo restante:</strong> ${selectedEvent.extendedProps.remainingBalance}</Typography>
+                <Typography variant="body1"><strong>Dirección:</strong> {selectedEvent.extendedProps.address}</Typography>
+                <Typography variant="body1"><strong>Teléfono:</strong> {selectedEvent.extendedProps.phone}</Typography>
+                {selectedEvent.extendedProps.observations && <Typography variant="body2"><strong>Observaciones:</strong> {selectedEvent.extendedProps.observations}</Typography>}
+                <Button variant="contained" color="primary" onClick={() => setOpenModal(false)} sx={{ mt: 2, width: "100%" }}>Cerrar</Button>
+              </>
+            )}
+          </Box>
+        </Modal>
       </div>
     </ThemeProvider>
   );

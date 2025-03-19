@@ -222,7 +222,7 @@ const EventList = ({ events: initialEvents }) => {
                         <CreditCardIcon className="h-5 w-5" />
                       </Link>
                       <Link
-                        href="/avisos"
+                        href={`/avisos?id=${event.id}&email=${encodeURIComponent(event.email || "")}`}
                         className={`p-1 rounded-md transition duration-300 ${
                           loading
                             ? "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -252,6 +252,30 @@ const EventList = ({ events: initialEvents }) => {
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
+                    {/* Botón de WhatsApp */}
+                    {event.phone && (
+                      <a
+                        href={`https://wa.me/${"+549" + event.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hola, quería consultar sobre el evento.")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 rounded-md bg-green-500 text-white hover:bg-green-600 transition duration-300"
+                        title="Enviar mensaje por WhatsApp"
+                      >
+                        {/* Ícono de WhatsApp */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-9a1 1 0 10-2 0v3H7a1 1 0 100 2h3v3a1 1 0 102 0v-3h3a1 1 0 100-2h-3V9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </a>
+                    )}
                     </td>
                   </tr>
                 );
@@ -283,73 +307,92 @@ const EventList = ({ events: initialEvents }) => {
 
       {/* Modal de Detalles */}
       {isModalOpen && selectedEvent && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            {/* Fondo desenfocado */}
-            <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm" onClick={closeDetailsModal}></div>
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          {/* Fondo desenfocado */}
+          <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm" onClick={closeDetailsModal}></div>
 
-            {/* Contenido del modal */}
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-4">
-                      Detalles del Evento
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        <strong>Nombre:</strong> {selectedEvent.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Fecha:</strong>{" "}
-                        {selectedEvent.date &&
-                        selectedEvent.date.split("-").length === 3
-                          ? `${selectedEvent.date.split("-")[2]}/${selectedEvent.date.split("-")[1]}/${selectedEvent.date.split("-")[0]}`
-                          : "Fecha no disponible"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Tipo:</strong> {selectedEvent.eventType?.name || "Sin tipo"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Invitados:</strong> {selectedEvent.guests}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Total:</strong> ${formatNumber(selectedEvent.total)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Saldo Restante:</strong> ${formatNumber(selectedEvent.remainingBalance)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Hora de Inicio:</strong> {formatToLocalTimeOnly(selectedEvent.startTime)}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Hora de Finalización:</strong> {formatToLocalTimeOnly(selectedEvent.endTime)}
-                      </p>
-                      <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Datos del Cliente</h2>
-                      <p className="text-sm text-gray-500">
-                        <strong>Teléfono:</strong> {selectedEvent.phone || "N/A"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Email:</strong> {selectedEvent.email || "N/A"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Dirección:</strong> {selectedEvent.address || "N/A"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Observaciones:</strong> {selectedEvent.observations || "N/A"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Menú:</strong> {selectedEvent.menu || "Sin menú asignado"}
-                      </p>
-                      <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Vendedor</h2>
-                      <p className="text-sm text-gray-500">
-                        <strong>Vendedor:</strong> {selectedEvent.seller?.name || "Sin vendedor asignado"}
-                      </p>
+          {/* Contenido del modal */}
+          <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-4">
+                    Detalles del Evento
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      <strong>Nombre:</strong> {selectedEvent.name}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Fecha:</strong>{" "}
+                      {selectedEvent.date &&
+                      selectedEvent.date.split("-").length === 3
+                        ? `${selectedEvent.date.split("-")[2]}/${selectedEvent.date.split("-")[1]}/${selectedEvent.date.split("-")[0]}`
+                        : "Fecha no disponible"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Tipo:</strong> {selectedEvent.eventType?.name || "Sin tipo"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Invitados:</strong> {selectedEvent.guests}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Total:</strong> ${formatNumber(selectedEvent.total)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Saldo Restante:</strong> ${formatNumber(selectedEvent.remainingBalance)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Hora de Inicio:</strong> {formatToLocalTimeOnly(selectedEvent.startTime)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Hora de Finalización:</strong> {formatToLocalTimeOnly(selectedEvent.endTime)}
+                    </p>
+
+                    {/* Sección de Observaciones */}
+                    <div className="flex items-center mt-6 mb-4">
+                      <span className="text-lg text-gray-500 mr-2">•</span> {/* Punto de lista */}
+                      <h2 className="text-lg font-semibold text-gray-800">Observaciones</h2>
                     </div>
+                    <p className="text-sm text-gray-500">
+                      <strong></strong> {selectedEvent.observations || "N/A"}
+                    </p>
+
+                    {/* Sección de Menú */}
+                    <div className="flex items-center mt-6 mb-4">
+                      <span className="text-lg text-gray-500 mr-2">•</span> {/* Punto de lista */}
+                      <h2 className="text-lg font-semibold text-gray-800">Menú</h2>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      <strong></strong> {selectedEvent.menu || "N/A"}
+                    </p>
+
+                    {/* Datos del Cliente */}
+                    <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Datos del Cliente</h2>
+                    <p className="text-sm text-gray-500">
+                      <strong>Teléfono:</strong> {selectedEvent.phone || "N/A"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Email:</strong> {selectedEvent.email || "N/A"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Dirección:</strong> {selectedEvent.address || "N/A"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Observaciones:</strong> {selectedEvent.observations || "N/A"}
+                    </p>
+
+                    {/* Sección de Vendedor */}
+                    <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Vendedor</h2>
+                    <p className="text-sm text-gray-500">
+                      <strong>Vendedor:</strong> {selectedEvent.seller?.name || "Sin vendedor asignado"}
+                    </p>
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            </div>
+            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
               <button
                 onClick={closeDetailsModal}
                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
@@ -357,10 +400,10 @@ const EventList = ({ events: initialEvents }) => {
                 Cerrar
               </button>
             </div>
-            </div>
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 };

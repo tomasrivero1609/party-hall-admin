@@ -39,13 +39,6 @@ const Navbar = () => {
             >
               Crear Evento
             </Link>
-            <Link
-              href="/payments"
-              className="text-gray-600 hover:text-blue-600 transition duration-300"
-            >
-              Pagos
-            </Link>
-
             {/* Botón de Inicio/Cierre de Sesión */}
             {session ? (
               <button

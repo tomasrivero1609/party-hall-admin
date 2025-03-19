@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 const AvisosPage = () => {
   const [email, setEmail] = useState("");
@@ -9,6 +10,18 @@ const AvisosPage = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Obtener los parámetros de la URL
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get("id");
+  const emailFromParams = searchParams.get("email");
+
+  // Prellenar el correo electrónico si está presente en los parámetros
+  useEffect(() => {
+    if (emailFromParams) {
+      setEmail(emailFromParams);
+    }
+  }, [emailFromParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
