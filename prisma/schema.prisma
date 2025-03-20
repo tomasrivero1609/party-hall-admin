@@ -28,22 +28,15 @@ model Event {
   seller              Seller?     @relation(fields: [sellerId], references: [id]) // Relación opcional
   sellerId            Int?        // Hacer el campo opcional temporalmente
   payments            Payment[]
-
-  // Nuevos campos
   menu                String?     // Menú - Opcional
   observations        String?     // Observaciones - Opcional
+  fileUrls            String[]    // Array de URLs de archivos (opcional)
   startTime           DateTime?   // Hora de inicio - Opcional
   endTime             DateTime?   // Hora de finalización - Opcional
   phone               String?     // Teléfono - Opcional
   email               String?     // Mail - Opcional
   address             String?     // Dirección - Opcional
   familyNames         String?     // Nombre de familiares - Opcional
-
-  // Nuevo campo para el recordatorio
-  lastPaymentDate     DateTime?   // Fecha del último pago (opcional)
-
-  // Nuevo campo para almacenar la URL del archivo subido
-  fileUrl             String?     // URL del archivo (opcional)
 }
 
 model Payment {

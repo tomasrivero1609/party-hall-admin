@@ -26,7 +26,6 @@ export async function GET(request) {
   }
 }
 
-// Método POST: Crear un nuevo evento
 export async function POST(request) {
   try {
     const data = await request.json();
@@ -86,7 +85,7 @@ export async function POST(request) {
         sellerId: parseInt(data.sellerId),
         menu: data.menu || "",
         observations: data.observations || "",
-        fileUrl: data.fileUrl || null, // Asegúrate de incluir fileUrl aquí
+        fileUrls: data.fileUrls || [], // Guarda las URLs de los archivos como un array
         startTime: startTime, // Usar el objeto Date válido
         endTime: endTime,     // Usar el objeto Date válido
         phone: data.phone || "",

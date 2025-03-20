@@ -31,53 +31,53 @@ const eventSchema = z.object({
 
 const CreateEventForm = () => {
 
-  const handleFileUpload = async (file) => {
+  const handleFileUpload = async (files) => {
     try {
-      // Define los formatos permitidos
-      const allowedFormats = ["image/jpeg", "image/png", "application/pdf", "text/plain"];
-      if (!allowedFormats.includes(file.type)) {
-        alert("Formato de archivo no permitido. Solo se permiten JPG, PNG, PDF y TXT.");
-        return;
+      const uploadedFileUrls = []; // Array para almacenar las URLs de los archivos subidos
+  
+      for (const file of files) {
+        // Genera un nombre único para evitar conflictos
+        const uniqueFileName = `${Date.now()}-${file.name}`;
+  
+        // Sube el archivo al bucket
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('eventos')
+          .upload(`public/${uniqueFileName}`, file);
+  
+        if (uploadError) {
+          console.error("Error subiendo el archivo:", uploadError.message);
+          alert(`Error subiendo el archivo: ${file.name}`);
+          continue; // Continúa con el siguiente archivo si hay un error
+        }
+  
+        console.log("Archivo subido exitosamente:", uploadData);
+  
+        // Obtiene la URL pública del archivo
+        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
+          .from('eventos')
+          .getPublicUrl(`public/${uniqueFileName}`);
+  
+        if (publicUrlError) {
+          console.error("Error obteniendo la URL pública:", publicUrlError.message);
+          alert(`Error obteniendo la URL pública: ${file.name}`);
+          continue; // Continúa con el siguiente archivo si hay un error
+        }
+  
+        const fileUrl = publicUrlData.publicUrl;
+  
+        console.log("URL pública del archivo:", fileUrl);
+  
+        // Agrega la URL al array de URLs
+        uploadedFileUrls.push(fileUrl);
       }
   
-      // Genera un nombre único para evitar conflictos
-      const uniqueFileName = `${Date.now()}-${file.name}`;
-  
-      // Sube el archivo al bucket
-      const { data, error } = await supabase.storage
-        .from('eventos')
-        .upload(`public/${uniqueFileName}`, file);
-  
-      if (error) {
-        console.error("Error subiendo el archivo:", error.message);
-        alert(`Error subiendo el archivo: ${error.message}`);
-        return;
-      }
-  
-      console.log("Archivo subido exitosamente:", data);
-  
-      // Obtiene la URL pública del archivo
-      const { data: publicUrlData, error: publicUrlError } = await supabase.storage
-        .from('eventos')
-        .getPublicUrl(`public/${uniqueFileName}`);
-  
-      if (publicUrlError) {
-        console.error("Error obteniendo la URL pública:", publicUrlError.message);
-        alert(`Error obteniendo la URL pública: ${publicUrlError.message}`);
-        return;
-      }
-  
-      const fileUrl = publicUrlData.publicUrl;
-  
-      console.log("URL pública del archivo:", fileUrl);
-  
-      // Actualiza el estado formData con la URL del archivo
+      // Actualiza el estado formData con las nuevas URLs
       setFormData((prevData) => ({
         ...prevData,
-        fileUrl: fileUrl,
+        fileUrls: [...(prevData.fileUrls || []), ...uploadedFileUrls], // Combina las URLs existentes con las nuevas
       }));
   
-      alert("Archivo subido y URL guardada correctamente.");
+      alert("Archivos subidos y URLs guardadas correctamente.");
     } catch (err) {
       console.error("Error inesperado:", err);
       alert("Error inesperado: " + err.message);
@@ -415,7 +415,8 @@ useEffect(() => {
             <label className="block text-gray-700 font-medium mb-2">Cargar Archivo (Opcional)</label>
             <input
               type="file"
-              onChange={(e) => handleFileUpload(e.target.files[0])}
+              multiple // Habilita la selección de múltiples archivos
+              onChange={(e) => handleFileUpload(e.target.files)} // Maneja un array de archivos
             />
           </div>
 

@@ -494,29 +494,46 @@ const EventList = ({ events: initialEvents }) => {
                     <p className="text-sm text-gray-500">
                       <strong>Hora de Finalización:</strong> {formatToLocalTimeOnly(selectedEvent.endTime)}
                     </p>
-
                     {/* Sección de Observaciones */}
                     <div className="flex items-center mt-6 mb-4">
                       <span className="text-lg text-gray-500 mr-2">•</span> {/* Punto de lista */}
                       <h2 className="text-lg font-semibold text-gray-800">Observaciones</h2>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      <strong>Observaciones:</strong> {selectedEvent.observations || "N/A"}
-                      <br />
-                      <strong>Archivo Adjunto:</strong>{" "}
-                      {selectedEvent.fileUrl ? (
-                        <a
-                          href={selectedEvent.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Ver Archivo
-                        </a>
-                      ) : (
-                        "No tiene archivos subidos"
-                      )}
-                    </p>
+
+                    <div className="text-sm text-gray-500 space-y-2">
+                      {/* Observaciones */}
+                      <p>
+                        <strong>Observaciones:</strong> {selectedEvent.observations || "N/A"}
+                      </p>
+
+                      {/* Archivos Adjuntos */}
+                      <div>
+                        <strong>Archivos Adjuntos:</strong>
+                        {selectedEvent.fileUrls && selectedEvent.fileUrls.length > 0 ? (
+                          <ul className="list-disc pl-5 space-y-1">
+                            {selectedEvent.fileUrls.map((url, index) => {
+                              const fileName = url.split("/").pop(); // Extrae el nombre del archivo desde la URL
+                              const fileType = fileName.split(".").pop().toUpperCase(); // Obtiene la extensión del archivo
+                              return (
+                                <li key={index}>
+                                  <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:underline"
+                                  >
+                                    {fileName} ({fileType})
+                                  </a>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : (
+                          <p>No hay archivos adjuntos</p>
+                        )}
+                      </div>
+                    </div>
+                    
 
                     {/* Sección de Menú */}
                     <div className="flex items-center mt-6 mb-4">
