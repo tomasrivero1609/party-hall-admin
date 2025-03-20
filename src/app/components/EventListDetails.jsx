@@ -19,7 +19,7 @@ const EventList = ({ events: initialEvents }) => {
   const [events, setEvents] = useState(initialEvents);
   const [selectedEvent, setSelectedEvent] = useState(null); // Estado para almacenar el evento seleccionado
   const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar el modal
-  const eventsPerPage = 10;
+  const eventsPerPage = 6;
 
 
 
