@@ -1,4 +1,5 @@
 "use client";
+import supabase from "../../lib/supabaseClient"; 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Para redirigir al usuario
 import { z } from "zod"; // Importa Zod
@@ -18,6 +19,7 @@ const eventSchema = z.object({
   eventTypeId: z.string().min(1, "El tipo de evento es obligatorio"),
   menu: z.string().optional(), // Menú (opcional)
   observations: z.string().optional(), // Observaciones (opcional)
+  fileUrl: z.string().optional(), // Nuevo campo para la URL del archivo
   startTime: z.string().min(1, "La hora de inicio es obligatoria"), // Hora de inicio
   endTime: z.string().min(1, "La hora de finalización es obligatoria"), // Hora de finalización
   phone: z.string().min(1, "El teléfono es obligatorio"),
@@ -28,6 +30,60 @@ const eventSchema = z.object({
 });
 
 const CreateEventForm = () => {
+
+  const handleFileUpload = async (file) => {
+    try {
+      // Define los formatos permitidos
+      const allowedFormats = ["image/jpeg", "image/png", "application/pdf", "text/plain"];
+      if (!allowedFormats.includes(file.type)) {
+        alert("Formato de archivo no permitido. Solo se permiten JPG, PNG, PDF y TXT.");
+        return;
+      }
+  
+      // Genera un nombre único para evitar conflictos
+      const uniqueFileName = `${Date.now()}-${file.name}`;
+  
+      // Sube el archivo al bucket
+      const { data, error } = await supabase.storage
+        .from('eventos')
+        .upload(`public/${uniqueFileName}`, file);
+  
+      if (error) {
+        console.error("Error subiendo el archivo:", error.message);
+        alert(`Error subiendo el archivo: ${error.message}`);
+        return;
+      }
+  
+      console.log("Archivo subido exitosamente:", data);
+  
+      // Obtiene la URL pública del archivo
+      const { data: publicUrlData, error: publicUrlError } = await supabase.storage
+        .from('eventos')
+        .getPublicUrl(`public/${uniqueFileName}`);
+  
+      if (publicUrlError) {
+        console.error("Error obteniendo la URL pública:", publicUrlError.message);
+        alert(`Error obteniendo la URL pública: ${publicUrlError.message}`);
+        return;
+      }
+  
+      const fileUrl = publicUrlData.publicUrl;
+  
+      console.log("URL pública del archivo:", fileUrl);
+  
+      // Actualiza el estado formData con la URL del archivo
+      setFormData((prevData) => ({
+        ...prevData,
+        fileUrl: fileUrl,
+      }));
+  
+      alert("Archivo subido y URL guardada correctamente.");
+    } catch (err) {
+      console.error("Error inesperado:", err);
+      alert("Error inesperado: " + err.message);
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     date: "",
@@ -37,6 +93,7 @@ const CreateEventForm = () => {
     sellerId: "", // Inicialmente vacío
     menu: "",
     observations: "",
+    fileUrl: "", // Nuevo estado para la URL del archivo
     startTime: "",
     endTime: "",
     phone: "",
@@ -144,6 +201,7 @@ useEffect(() => {
           eventTypeId: "",
           menu: "",
           observations: "",
+          fileUrl: "",  // Reinicia la URL del archivo
           startTime: "",
           endTime: "",
           phone: "",
@@ -193,6 +251,9 @@ useEffect(() => {
     );
   };
 
+
+  
+  
   // Redirige al usuario después de cerrar el mensaje de éxito
   const handleSuccessClose = () => {
     setShowSuccessMessage(false);
@@ -350,6 +411,15 @@ useEffect(() => {
             ></textarea>
             {errors.observations && <p className="text-red-500 text-sm">{errors.observations}</p>}
           </div>
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">Cargar Archivo (Opcional)</label>
+            <input
+              type="file"
+              onChange={(e) => handleFileUpload(e.target.files[0])}
+            />
+          </div>
+
+
         </div>
 
         {/* Datos del Cliente */}

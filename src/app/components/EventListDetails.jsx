@@ -501,7 +501,21 @@ const EventList = ({ events: initialEvents }) => {
                       <h2 className="text-lg font-semibold text-gray-800">Observaciones</h2>
                     </div>
                     <p className="text-sm text-gray-500">
-                      <strong></strong> {selectedEvent.observations || "N/A"}
+                      <strong>Observaciones:</strong> {selectedEvent.observations || "N/A"}
+                      <br />
+                      <strong>Archivo Adjunto:</strong>{" "}
+                      {selectedEvent.fileUrl ? (
+                        <a
+                          href={selectedEvent.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          Ver Archivo
+                        </a>
+                      ) : (
+                        "No tiene archivos subidos"
+                      )}
                     </p>
 
                     {/* Sección de Menú */}

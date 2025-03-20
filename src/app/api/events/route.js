@@ -86,6 +86,7 @@ export async function POST(request) {
         sellerId: parseInt(data.sellerId),
         menu: data.menu || "",
         observations: data.observations || "",
+        fileUrl: data.fileUrl || null, // Asegúrate de incluir fileUrl aquí
         startTime: startTime, // Usar el objeto Date válido
         endTime: endTime,     // Usar el objeto Date válido
         phone: data.phone || "",
