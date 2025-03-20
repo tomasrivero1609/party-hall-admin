@@ -1,5 +1,6 @@
 import Link from "next/link";
-import React, { useState, useMemo } from "react";
+import toast from "react-hot-toast";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   TrashIcon,
   EnvelopeIcon,
@@ -16,6 +17,8 @@ const EventList = ({ events: initialEvents }) => {
   const [selectedEvent, setSelectedEvent] = useState(null); // Estado para almacenar el evento seleccionado
   const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar el modal
   const eventsPerPage = 10;
+
+
 
   // Función para formatear una hora UTC al huso horario de Argentina
   const formatToLocalTimeOnly = (utcDate) => {
@@ -76,31 +79,63 @@ const EventList = ({ events: initialEvents }) => {
 
   const formatNumber = (number) => number.toLocaleString("es-CL");
 
-  // Función para eliminar un evento
+  const checkAllEventsStatus = () => {
+    currentEvents.forEach((event) => {
+      if (!event.lastPaymentDate) {
+        // Si no hay fecha de último pago, mostrar una advertencia
+        toast.warning(`El evento "${event.name}" no tiene un registro de pagos.`, {
+          duration: 5000,
+          position: "top-right",
+        });
+        return;
+      }
+  
+      const today = new Date();
+      const lastPaymentDate = new Date(event.lastPaymentDate);
+      const daysDifference = Math.floor(
+        (today - lastPaymentDate) / (1000 * 60 * 60 * 24) // Diferencia en días
+      );
+  
+      if (daysDifference >= 50) {
+        // Mostrar una notificación si han pasado 50 días o más
+        toast.error(
+          `¡Atención! Han pasado ${daysDifference} días desde el último pago del evento "${event.name}". Este evento está por vencer.
+            Teléfono: "${event.phone}". Correo: "${event.email}"`,
+          {
+            duration: 10000,
+            position: "top-right",
+          }
+        );
+      }
+    });
+  };
+
+    // Hook useEffect para verificar el estado de los eventos al cargar el componente
+    useEffect(() => {
+      // Verificar el estado de todos los eventos al cargar el componente
+      checkAllEventsStatus();
+    }, [currentEvents]);
+
   const deleteEvent = async (eventId) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este evento?")) {
       return;
     }
-
     setLoading(true);
-
     try {
       const response = await fetch(`/api/abm-events?id=${eventId}`, {
         method: "DELETE",
       });
-
       const responseData = await response.json();
-
       if (response.ok) {
         setEvents(events.filter((e) => e.id !== eventId));
-        alert("Evento eliminado exitosamente");
+        toast.success("Evento eliminado exitosamente"); // Notificación de éxito
       } else {
         console.error("Respuesta del servidor:", responseData);
-        alert(`Error al eliminar el evento: ${responseData.error || "Error desconocido"}`);
+        toast.error(`Error al eliminar el evento: ${responseData.error || "Error desconocido"}`); // Notificación de error
       }
     } catch (error) {
       console.error("Error al eliminar el evento:", error);
-      alert("Ocurrió un error al intentar eliminar el evento.");
+      toast.error("Ocurrió un error al intentar eliminar el evento."); // Notificación de error
     } finally {
       setLoading(false);
     }
@@ -243,7 +278,7 @@ const EventList = ({ events: initialEvents }) => {
                           {lastPaymentFormatted}. ¡Recuerda pagar pronto!
                         </span>
                       ) : (
-                        <span className="text-green-600">Al día</span>
+                        <span className="text-green-600">Al día: {lastPaymentFormatted} Último pago.</span>
                       )}
                     </td>
                     {/* Acciones */}
