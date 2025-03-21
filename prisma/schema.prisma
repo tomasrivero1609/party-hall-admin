@@ -28,6 +28,7 @@ model Event {
   seller              Seller?     @relation(fields: [sellerId], references: [id]) // Relación opcional
   sellerId            Int?        // Hacer el campo opcional temporalmente
   payments            Payment[]
+  lastPaymentDate     DateTime?  // Fecha del último pago (opcional)
   menu                String?     // Menú - Opcional
   observations        String?     // Observaciones - Opcional
   fileUrls            String[]    // Array de URLs de archivos (opcional)
