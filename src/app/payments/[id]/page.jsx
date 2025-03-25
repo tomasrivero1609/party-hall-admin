@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { z } from "zod";
 import { jsPDF } from "jspdf";
@@ -229,14 +230,26 @@ export default function PaymentForm() {
           {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
         </div>
 
-        {/* Botón de Envío */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`w-full py-2 px-4 rounded-md ${isSubmitting ? "bg-gray-400" : "bg-green-500 text-white"}`}
-        >
-          {isSubmitting ? "Registrando pago..." : "Registrar Pago"}
-        </button>
+        {/* Botones de Acción */}
+        <div className="flex justify-between mt-4">
+          {/* Botón de Volver */}
+          <Link href={`/eventsdetails`}>
+            <button
+              className="w-auto py-2 px-4 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
+            >
+              Volver
+            </button>
+          </Link>
+
+          {/* Botón de Envío */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-auto py-2 px-4 rounded-md ${isSubmitting ? "bg-gray-400" : "bg-green-500 text-white"}`}
+          >
+            {isSubmitting ? "Registrando pago..." : "Registrar Pago"}
+          </button>
+        </div>
       </form>
     </div>
   );

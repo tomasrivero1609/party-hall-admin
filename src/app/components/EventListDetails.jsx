@@ -15,30 +15,24 @@ const EventList = ({ events: initialEvents }) => {
   const [filterEventType, setFilterEventType] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [readNotifications, setReadNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState(initialEvents);
   const [selectedEvent, setSelectedEvent] = useState(null); // Estado para almacenar el evento seleccionado
   const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar el modal
+  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
   const eventsPerPage = 6;
-
-
 
   // Función para formatear una hora UTC al huso horario de Argentina
   const formatToLocalTimeOnly = (utcDate) => {
     if (!utcDate) return "N/A";
-
-    // Crear un objeto Date a partir de la fecha UTC
     const date = new Date(utcDate);
-
-    // Opciones para formatear solo la hora en el huso horario de Argentina
     const options = {
       hour: "numeric",
       minute: "numeric",
-      hour12: true, // Usa formato AM/PM
-      timeZone: "America/Argentina/Buenos_Aires", // Huso horario de Argentina
+      hour12: true,
+      timeZone: "America/Argentina/Buenos_Aires",
     };
-
-    // Formatear la hora usando Intl.DateTimeFormat
     return new Intl.DateTimeFormat("es-AR", options).format(date);
   };
 
@@ -69,14 +63,13 @@ const EventList = ({ events: initialEvents }) => {
   const indexOfLastEvent = currentPage * eventsPerPage;
   const indexOfFirstEvent = indexOfLastEvent - eventsPerPage;
   const currentEvents = filteredEvents.slice(indexOfFirstEvent, indexOfLastEvent);
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const getDaysSince = (date) => {
     const today = new Date();
     const targetDate = new Date(date);
     const timeDifference = today - targetDate;
-    const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24)); // Diferencia en días
+    const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
     return daysDifference;
   };
 
@@ -91,49 +84,28 @@ const EventList = ({ events: initialEvents }) => {
     });
   }, [currentEvents]);
 
-
-  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
-
   const toggleNotificationsPanel = () => {
     setIsNotificationsPanelOpen(!isNotificationsPanelOpen);
   };
 
-  const deleteEvent = async (eventId) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este evento?")) {
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/abm-events?id=${eventId}`, {
-        method: "DELETE",
-      });
-      const responseData = await response.json();
-      if (response.ok) {
-        setEvents(events.filter((e) => e.id !== eventId));
-        toast.success("Evento eliminado exitosamente"); // Notificación de éxito
-      } else {
-        console.error("Respuesta del servidor:", responseData);
-        toast.error(`Error al eliminar el evento: ${responseData.error || "Error desconocido"}`); // Notificación de error
-      }
-    } catch (error) {
-      console.error("Error al eliminar el evento:", error);
-      toast.error("Ocurrió un error al intentar eliminar el evento."); // Notificación de error
-    } finally {
-      setLoading(false);
+  const markAsRead = (eventId) => {
+    if (!readNotifications.includes(eventId)) {
+      setReadNotifications([...readNotifications, eventId]);
     }
   };
 
-  // Función para abrir el modal y cargar los detalles del evento
-  const openDetailsModal = (event) => {
-    setSelectedEvent(event);
-    setIsModalOpen(true);
+  const markAsUnread = (eventId) => {
+    setReadNotifications(readNotifications.filter((id) => id !== eventId));
   };
 
-  // Función para cerrar el modal
-  const closeDetailsModal = () => {
-    setSelectedEvent(null);
-    setIsModalOpen(false);
-  };
+  useEffect(() => {
+    localStorage.setItem("readNotifications", JSON.stringify(readNotifications));
+  }, [readNotifications]);
+
+  useEffect(() => {
+    const savedReadNotifications = JSON.parse(localStorage.getItem("readNotifications")) || [];
+    setReadNotifications(savedReadNotifications);
+  }, []);
 
   return (
     <div>
@@ -154,7 +126,6 @@ const EventList = ({ events: initialEvents }) => {
             </option>
           ))}
         </select>
-
         <input
           type="text"
           placeholder="Buscar por nombre del evento..."
@@ -165,7 +136,6 @@ const EventList = ({ events: initialEvents }) => {
           }}
           className="px-4 py-2 border border-gray-300 rounded-md w-full md:w-auto"
         />
-
         <button
           onClick={() => {
             setFilterEventType("");
@@ -176,6 +146,7 @@ const EventList = ({ events: initialEvents }) => {
         >
           Limpiar Filtros
         </button>
+
         {/* Botón de Notificaciones */}
         <button
           onClick={toggleNotificationsPanel}
@@ -184,92 +155,100 @@ const EventList = ({ events: initialEvents }) => {
         >
           <BellIcon className="h-6 w-6" />
 
-          {pendingEvents.length > 0 && (
-            <span className="absolute top-0 right-0 translate-x-1 -translate-y-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              {pendingEvents.length}
+          {/* Contador de notificaciones no leídas */}
+          {pendingEvents.filter((event) => !readNotifications.includes(event.id)).length > 0 && (
+            <span className="absolute top-0 right-0 translate-x-1 -translate-y-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+              {pendingEvents.filter((event) => !readNotifications.includes(event.id)).length}
             </span>
           )}
         </button>
       </div>
 
-{/* Panel de Notificaciones */}
-{isNotificationsPanelOpen && (
-  <div 
-    className="fixed top-20 right-10 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 animate-slide-in"
-    style={{ animationDuration: '0.3s' }}
-  >
-    {/* Título con ícono */}
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="text-lg font-bold text-gray-900 flex items-center">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 mr-2 text-blue-500"
-          viewBox="0 0 20 20"
-          fill="currentColor"
+      {/* Panel de Notificaciones */}
+      {isNotificationsPanelOpen && (
+        <div
+          className="fixed top-20 right-10 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl p-6 animate-slide-in"
+          style={{ animationDuration: '0.3s' }}
         >
-          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 110-6 3 3 0 010 6z" />
-        </svg>
-        Notificaciones
-      </h3>
-      <button
-        onClick={() => setIsNotificationsPanelOpen(false)}
-        className="text-gray-500 hover:text-gray-700 transition duration-300"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-    </div>
-
-    {/* Contenido de las notificaciones */}
-    {pendingEvents.length > 0 ? (
-      pendingEvents.map((event) => {
-        const daysSinceLastActivity = getDaysSince(event.lastPaymentDate || event.date);
-        return (
-          <div key={event.id} className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
+          {/* Título con ícono */}
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-red-500"
+                className="h-5 w-5 mr-2 text-blue-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 110-6 3 3 0 010 6z" />
+              </svg>
+              Notificaciones
+            </h3>
+            <button
+              onClick={() => setIsNotificationsPanelOpen(false)}
+              className="text-gray-500 hover:text-gray-700 transition duration-300"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
                 <path
                   fillRule="evenodd"
-                  d="M8.257 3.099c.774-1.029 2.034-1.029 2.808 0l1.584 2.112a.75.75 0 00.652.236h3.586a.75.75 0 010 1.5H11.94a.75.75 0 00-.652.236l-1.584 2.112a.75.75 0 00.652 1.264h3.586a.75.75 0 010 1.5H10.06a.75.75 0 00-.652 1.264l1.584 2.112a.75.75 0 00.652.236h3.586a.75.75 0 010 1.5H8.257a.75.75 0 00-.652-1.264l-1.584-2.112a.75.75 0 00-.652-1.264H4.414a.75.75 0 010-1.5h3.586a.75.75 0 00.652-1.264l-1.584-2.112a.75.75 0 00-.652-1.264H4.414a.75.75 0 010-1.5h3.586a.75.75 0 00.652-1.264z"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                   clipRule="evenodd"
                 />
               </svg>
-              <div>
-                <p className="text-sm font-medium text-gray-800">{event.name}</p>
-                <p className="text-xs text-red-600">
-                  ¡Atención! Han pasado {daysSinceLastActivity} días desde el último pago.
-                </p>
-                <p className="text-xs text-red-600">
-                  Su teléfono: {event.phone}.
-                </p>
-                <p className="text-xs text-red-600">
-                   Su correo: {event.email}
-                </p>
-              </div>
-            </div>
+            </button>
           </div>
-        );
-      })
-    ) : (
-      <p className="text-sm text-gray-500 text-center py-6">No hay eventos pendientes de pago.</p>
-    )}
-  </div>
-)}
+
+          {/* Contenido de las notificaciones */}
+          {pendingEvents.length > 0 ? (
+            pendingEvents.map((event) => {
+              const daysSinceLastActivity = getDaysSince(event.lastPaymentDate || event.date);
+              return (
+                <div
+                  key={event.id}
+                  className={`mb-4 p-4 rounded-lg border ${
+                    readNotifications.includes(event.id)
+                      ? "bg-gray-100 border-gray-300" // Estilo para notificaciones leídas
+                      : "bg-gray-50 border-gray-200" // Estilo para notificaciones no leídas
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <svg className="h-5 w-5 text-red-500">...</svg>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{event.name}</p>
+                      <p className="text-xs text-red-600">
+                        ¡Atención! Han pasado {daysSinceLastActivity} días desde el último pago.
+                      </p>
+                      <p className="text-xs text-red-600">Su teléfono: {event.phone}.</p>
+                      <p className="text-xs text-red-600">Su correo: {event.email}</p>
+                    </div>
+                  </div>
+                  {/* Botones para marcar como leída/no leída */}
+                  <div className="flex space-x-2 mt-2">
+                    <button
+                      onClick={() => markAsRead(event.id)}
+                      className="px-3 py-1 bg-green-500 text-white text-xs rounded-md hover:bg-green-600 transition duration-300"
+                    >
+                      Marcar como leída
+                    </button>
+                    <button
+                      onClick={() => markAsUnread(event.id)}
+                      className="px-3 py-1 bg-yellow-500 text-white text-xs rounded-md hover:bg-yellow-600 transition duration-300"
+                    >
+                      Marcar como no leída
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-6">No hay eventos pendientes de pago.</p>
+          )}
+        </div>
+      )}
       
       {/* Feedback visual */}
       <p className="text-sm text-gray-500 mt-2">

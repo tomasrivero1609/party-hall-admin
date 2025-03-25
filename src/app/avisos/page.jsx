@@ -1,6 +1,7 @@
 "use client"; // Asegúrate de que el archivo esté marcado como un componente del lado del cliente
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -106,18 +107,26 @@ const AvisosPageContent = () => {
               className="mt-1 w-full text-sm text-gray-500 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
             />
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-lg shadow-md text-white font-bold transition duration-300 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            {loading ? "Enviando..." : "Enviar Aviso"}
-          </button>
+          <div className="flex justify-between mt-4">
+          <Link href={`/eventsdetails`}>
+            <button
+              className="w-auto py-2 px-4 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition duration-300"
+            >
+              Volver
+            </button>
+          </Link>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-auto py-2 px-4 rounded-md bg-blue-500 text-white hover:bg-blue-600 transition duration-300 ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {loading ? "Enviando..." : "Enviar Aviso"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
