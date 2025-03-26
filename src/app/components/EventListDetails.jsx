@@ -88,6 +88,42 @@ const EventList = ({ events: initialEvents }) => {
     setIsNotificationsPanelOpen(!isNotificationsPanelOpen);
   };
 
+   // Función para abrir el modal y cargar los detalles del evento
+   const openDetailsModal = (event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedEvent(null);
+    setIsModalOpen(false);
+  };
+
+  const deleteEvent = async (eventId) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este evento?")) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/abm-events?id=${eventId}`, {
+        method: "DELETE",
+      });
+      const responseData = await response.json();
+      if (response.ok) {
+        setEvents(events.filter((e) => e.id !== eventId));
+        toast.success("Evento eliminado exitosamente"); // Notificación de éxito
+      } else {
+        console.error("Respuesta del servidor:", responseData);
+        toast.error(`Error al eliminar el evento: ${responseData.error || "Error desconocido"}`); // Notificación de error
+      }
+    } catch (error) {
+      console.error("Error al eliminar el evento:", error);
+      toast.error("Ocurrió un error al intentar eliminar el evento."); // Notificación de error
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const markAsRead = (eventId) => {
     if (!readNotifications.includes(eventId)) {
       setReadNotifications([...readNotifications, eventId]);
