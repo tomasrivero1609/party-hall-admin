@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 
 const Navbar = () => {
   const { data: session } = useSession();
+  const userRole = session?.user?.role || "user"; // Rol del usuario (default: "user")
 
   return (
     <nav className="bg-white">
@@ -21,33 +22,52 @@ const Navbar = () => {
 
           {/* Enlaces de Navegación */}
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-6 items-center justify-center sm:justify-start">
-            <Link
-              href="/eventsdetails"
-              className="text-gray-600 hover:text-blue-600 transition duration-300"
-            >
-              Eventos
-            </Link>
-            <Link
-              href="/calendar"
-              className="text-gray-600 hover:text-blue-600 transition duration-300"
-            >
-              Calendario
-            </Link>
-            <Link
-              href="/create-event"
-              className="text-gray-600 hover:text-blue-600 transition duration-300"
-            >
-              Crear Evento
-            </Link>
-            {/* Botón de Inicio/Cierre de Sesión */}
+            {/* Mostrar enlaces según el estado de autenticación y el rol */}
             {session ? (
-              <button
-                onClick={() => signOut()}
-                className="text-red-600 hover:text-red-800 transition duration-300"
-              >
-                Cerrar Sesión
-              </button>
+              <>
+                {/* Admin y Subadmin pueden ver "Eventos" y "Crear Evento" */}
+                {["admin", "subadmin"].includes(userRole) && (
+                  <>
+                    <Link
+                      href="/eventsdetails"
+                      className="text-gray-600 hover:text-blue-600 transition duration-300"
+                    >
+                      Eventos
+                    </Link>
+                    <Link
+                      href="/create-event"
+                      className="text-gray-600 hover:text-blue-600 transition duration-300"
+                    >
+                      Crear Evento
+                    </Link>
+                  </>
+                )}
+                {/* User puede ver "Eventos" pero no "Crear Evento" */}
+                {userRole === "user" && (
+                  <Link
+                    href="/eventsdetails"
+                    className="text-gray-600 hover:text-blue-600 transition duration-300"
+                  >
+                    Eventos
+                  </Link>
+                )}
+                {/* Calendario visible para todos los roles */}
+                <Link
+                  href="/calendar"
+                  className="text-gray-600 hover:text-blue-600 transition duration-300"
+                >
+                  Calendario
+                </Link>
+                {/* Botón de Cerrar Sesión */}
+                <button
+                  onClick={() => signOut()}
+                  className="text-red-600 hover:text-red-800 transition duration-300"
+                >
+                  Cerrar Sesión
+                </button>
+              </>
             ) : (
+              // Si no hay sesión activa, solo mostrar el botón "Iniciar Sesión"
               <button
                 onClick={() => signIn()}
                 className="text-green-600 hover:text-green-800 transition duration-300"

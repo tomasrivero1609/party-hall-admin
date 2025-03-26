@@ -12,21 +12,36 @@ const authOptions = {
       async authorize(credentials) {
         try {
           console.log("Credenciales recibidas:", credentials);
-
+      
           // Simula una base de datos de usuarios
-          const user = {
-            id: 1,
-            email: "admin@example.com",
-            password: "password123",
-            role: "admin", // Agregamos el campo "role"
-          };
-
-          if (
-            credentials.email === user.email &&
-            credentials.password === user.password
-          ) {
+          const users = [
+            {
+              id: 1,
+              email: "admin@example.com",
+              password: "password123",
+              role: "admin", // Admin tiene acceso completo
+            },
+            {
+              id: 2,
+              email: "subadmin@example.com",
+              password: "password456",
+              role: "subadmin", // Subadmin tiene acceso limitado
+            },
+            {
+              id: 3,
+              email: "user@example.com",
+              password: "password789",
+              role: "user", // User tiene acceso mínimo
+            },
+          ];
+      
+          const user = users.find(
+            (u) => u.email === credentials.email && u.password === credentials.password
+          );
+      
+          if (user) {
             console.log("Usuario autenticado:", user);
-            return user; // Devuelve el usuario con el campo "role"
+            return user; // Devuelve el usuario con su rol
           } else {
             console.error("Credenciales inválidas");
             return null;

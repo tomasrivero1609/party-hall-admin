@@ -1,5 +1,6 @@
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 import EditEventModal from "./EditEventModal"; // Asegúrate de ajustar la ruta según tu estructura
 import { Menu } from "@headlessui/react";
 import React, { useState, useMemo, useEffect } from "react";
@@ -13,6 +14,8 @@ import {
 } from "@heroicons/react/24/solid";
 
 const EventList = ({ events: initialEvents }) => {
+  const { data: session } = useSession(); // Obtener la sesión actual
+  const userRole = session?.user?.role || "user"; // Rol del usuario (default: "user")
   const [filterEventType, setFilterEventType] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -406,48 +409,66 @@ const EventList = ({ events: initialEvents }) => {
                       )}
                     </td>
                     {/* Acciones */}
+                    {/* Acciones */}
                     <td className="py-3 px-4 text-sm flex items-center space-x-4">
-                      <Link
-                        href={`/payments_list/${event.id}`}
-                        className={`p-1 rounded-md transition duration-300 flex items-center justify-center ${
-                          loading
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
-                        title="Ver pagos"
-                      >
-                        <CreditCardIcon className="h-5 w-5" />
-                      </Link>
-                      <Link
-                        href={`/avisos?id=${event.id}&email=${encodeURIComponent(event.email || "")}`}
-                        className={`p-1 rounded-md transition duration-300 ${
-                          loading
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-green-500 text-white hover:bg-green-600"
-                        }`}
-                        title="Enviar Aviso"
-                      >
-                        <EnvelopeIcon className="h-5 w-5" />
-                      </Link>
-                      <button
-                        onClick={() => deleteEvent(event.id)}
-                        disabled={loading}
-                        className={`p-1 rounded-md transition duration-300 ${
-                          loading
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-red-500 text-white hover:bg-red-600"
-                        }`}
-                        title="Eliminar Evento"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => openEditModal(event)}
-                        className="p-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 transition duration-300"
-                        title="Editar Evento"
-                      >
-                        <PencilIcon className="h-5 w-5" /> {/* Ícono de lápiz */}
-                      </button>
+                      {/* Ver pagos - Visible para admin y subadmin */}
+                      {["admin", "subadmin"].includes(userRole) && (
+                        <Link
+                          href={`/payments_list/${event.id}`}
+                          className={`p-1 rounded-md transition duration-300 flex items-center justify-center ${
+                            loading
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-blue-500 text-white hover:bg-blue-600"
+                          }`}
+                          title="Ver pagos"
+                        >
+                          <CreditCardIcon className="h-5 w-5" />
+                        </Link>
+                      )}
+
+                      {/* Enviar aviso - Solo visible para admin */}
+                      {userRole === "admin" && (
+                        <Link
+                          href={`/avisos?id=${event.id}&email=${encodeURIComponent(event.email || "")}`}
+                          className={`p-1 rounded-md transition duration-300 ${
+                            loading
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-green-500 text-white hover:bg-green-600"
+                          }`}
+                          title="Enviar Aviso"
+                        >
+                          <EnvelopeIcon className="h-5 w-5" />
+                        </Link>
+                      )}
+
+                      {/* Eliminar evento - Solo visible para admin */}
+                      {userRole === "admin" && (
+                        <button
+                          onClick={() => deleteEvent(event.id)}
+                          disabled={loading}
+                          className={`p-1 rounded-md transition duration-300 ${
+                            loading
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-red-500 text-white hover:bg-red-600"
+                          }`}
+                          title="Eliminar Evento"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      )}
+
+                      {/* Editar evento - Solo visible para admin */}
+                      {userRole === "admin" && (
+                        <button
+                          onClick={() => openEditModal(event)}
+                          className="p-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 transition duration-300"
+                          title="Editar Evento"
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                      )}
+
+                      {/* Ver detalles - Visible para todos los roles */}
                       <button
                         onClick={() => openDetailsModal(event)}
                         className="p-1 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 transition duration-300"
@@ -455,7 +476,9 @@ const EventList = ({ events: initialEvents }) => {
                       >
                         <EyeIcon className="h-5 w-5" />
                       </button>
-                      {event.phone && (
+
+                      {/* Enviar mensaje por WhatsApp - Solo visible para admin */}
+                      {userRole === "admin" && event.phone && (
                         <a
                           href={`https://wa.me/${"+549" + event.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hola, quería consultar sobre el evento.")}`}
                           target="_blank"
