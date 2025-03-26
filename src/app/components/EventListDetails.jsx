@@ -1,5 +1,6 @@
 import Link from "next/link";
 import toast from "react-hot-toast";
+import EditEventModal from "./EditEventModal"; // Asegúrate de ajustar la ruta según tu estructura
 import { Menu } from "@headlessui/react";
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -7,12 +8,13 @@ import {
   EnvelopeIcon,
   BellIcon,
   CreditCardIcon,
-  DotsVerticalIcon,
+  PencilIcon,
   EyeIcon, // Nuevo ícono para "Ver detalles"
 } from "@heroicons/react/24/solid";
 
 const EventList = ({ events: initialEvents }) => {
   const [filterEventType, setFilterEventType] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [readNotifications, setReadNotifications] = useState([]);
@@ -22,6 +24,25 @@ const EventList = ({ events: initialEvents }) => {
   const [isModalOpen, setIsModalOpen] = useState(false); // Estado para controlar el modal
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
   const eventsPerPage = 6;
+
+  const openEditModal = (event) => {
+    setSelectedEvent({
+      ...event,
+      eventTypeId: event.eventType?.id || "", // Asegúrate de incluir el ID del tipo de evento
+    });
+    setIsEditModalOpen(true);
+  };
+  
+  const closeEditModal = () => {
+    setSelectedEvent(null);
+    setIsEditModalOpen(false);
+  };
+  
+  const handleUpdateEvent = (updatedEvent) => {
+    setEvents((prevEvents) =>
+      prevEvents.map((event) => (event.id === updatedEvent.id ? updatedEvent : event))
+    );
+  };
 
   // Función para formatear una hora UTC al huso horario de Argentina
   const formatToLocalTimeOnly = (utcDate) => {
@@ -72,6 +93,8 @@ const EventList = ({ events: initialEvents }) => {
     const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
     return daysDifference;
   };
+
+
 
   const formatNumber = (number) => number.toLocaleString("es-CL");
 
@@ -143,6 +166,8 @@ const EventList = ({ events: initialEvents }) => {
     setReadNotifications(savedReadNotifications);
   }, []);
 
+  
+
   return (
     <div>
       {/* Filtros */}
@@ -199,6 +224,15 @@ const EventList = ({ events: initialEvents }) => {
           )}
         </button>
       </div>
+
+      {isEditModalOpen && selectedEvent && (
+        <EditEventModal
+          event={selectedEvent}
+          onClose={closeEditModal}
+          onUpdate={handleUpdateEvent}
+          allEventTypes={allEventTypes} // Pasar los tipos de eventos al modal
+        />
+      )}
 
       {/* Panel de Notificaciones */}
       {isNotificationsPanelOpen && (
@@ -406,6 +440,13 @@ const EventList = ({ events: initialEvents }) => {
                         title="Eliminar Evento"
                       >
                         <TrashIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => openEditModal(event)}
+                        className="p-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 transition duration-300"
+                        title="Editar Evento"
+                      >
+                        <PencilIcon className="h-5 w-5" /> {/* Ícono de lápiz */}
                       </button>
                       <button
                         onClick={() => openDetailsModal(event)}

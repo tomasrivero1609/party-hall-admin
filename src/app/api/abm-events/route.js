@@ -118,9 +118,9 @@ export async function PUT(request) {
   try {
     const data = await request.json();
 
-    // Validar datos básicamente
-    if (!data.id || !data.name || !data.date || !data.guests || !data.pricePerPlate) {
-      return Response.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
+    // Validar campos obligatorios
+    if (!data.id || !data.guests || !data.pricePerPlate) {
+      return Response.json({ error: "Todos los campos son obligatorios" }, { status: 400 });
     }
 
     const guests = parseInt(data.guests);
@@ -128,30 +128,29 @@ export async function PUT(request) {
 
     // Validar que los valores sean números válidos
     if (isNaN(guests) || guests <= 0) {
-      return Response.json({ error: 'El número de invitados debe ser un número positivo' }, { status: 400 });
+      return Response.json({ error: "El número de invitados debe ser un número positivo" }, { status: 400 });
     }
     if (isNaN(pricePerPlate) || pricePerPlate <= 0) {
-      return Response.json({ error: 'El precio por plato debe ser un número positivo' }, { status: 400 });
+      return Response.json({ error: "El precio por plato debe ser un número positivo" }, { status: 400 });
     }
 
     // Actualizar el evento en la base de datos
     const updatedEvent = await prisma.event.update({
       where: { id: parseInt(data.id) },
       data: {
-        name: data.name,
-        date: new Date(data.date),
         guests,
         pricePerPlate,
-        total: guests * pricePerPlate,
-        remainingBalance: guests * pricePerPlate,
-        remainingPlates: guests,
-        eventTypeId: parseInt(data.eventTypeId),
+        total: guests * pricePerPlate, // Recalcular el total
+        remainingBalance: guests * pricePerPlate, // Ajustar saldo restante
+        remainingPlates: guests, // Ajustar platos restantes
+        observations: data.observations || null, // Actualizar observaciones
+        menu: data.menu || null, // Actualizar menú
       },
     });
 
     return Response.json(updatedEvent, { status: 200 });
   } catch (error) {
-    console.error('Error al actualizar el evento:', error);
-    return Response.json({ error: 'Error interno del servidor' }, { status: 500 });
+    console.error("Error al actualizar el evento:", error);
+    return Response.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
