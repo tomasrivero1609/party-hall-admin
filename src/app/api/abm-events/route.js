@@ -145,6 +145,7 @@ export async function PUT(request) {
         remainingPlates: guests, // Ajustar platos restantes
         observations: data.observations || null, // Actualizar observaciones
         menu: data.menu || null, // Actualizar menú
+        fileUrls: data.fileUrls || [], // Actualizar URLs de archivos adjuntos
       },
     });
 
