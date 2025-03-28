@@ -17,14 +17,14 @@ const authOptions = {
           const users = [
             {
               id: 1,
-              email: "admin@example.com",
-              password: "password123",
+              email: "ffacundonicolas@gmail.com",
+              password: "eventos225",
               role: "admin", // Admin tiene acceso completo
             },
             {
               id: 2,
-              email: "subadmin@example.com",
-              password: "password456",
+              email: "danielzoque50@gmail.com",
+              password: "danisub123",
               role: "subadmin", // Subadmin tiene acceso limitado
             },
             {
