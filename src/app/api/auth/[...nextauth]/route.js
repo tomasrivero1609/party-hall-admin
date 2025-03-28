@@ -29,8 +29,14 @@ const authOptions = {
             },
             {
               id: 3,
-              email: "user@example.com",
-              password: "password789",
+              email: "vaniestilo@gmail.com",
+              password: "vanieventos525",
+              role: "user", // User tiene acceso mínimo
+            },
+            {
+              id: 4,
+              email: "belenalvarez638@gmail.com",
+              password: "beleneventos528",
               role: "user", // User tiene acceso mínimo
             },
           ];
