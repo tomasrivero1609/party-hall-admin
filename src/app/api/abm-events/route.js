@@ -113,43 +113,63 @@ export async function DELETE(request) {
     }
   }
 
-// Método PUT: Actualizar un evento existente
 export async function PUT(request) {
   try {
     const data = await request.json();
 
-    // Validar campos obligatorios
     if (!data.id || !data.guests || !data.pricePerPlate) {
       return Response.json({ error: "Todos los campos son obligatorios" }, { status: 400 });
     }
 
+    const eventId = parseInt(data.id);
     const guests = parseInt(data.guests);
-    const pricePerPlate = parseFloat(data.pricePerPlate);
+    const newPricePerPlate = parseFloat(data.pricePerPlate);
 
-    // Validar que los valores sean números válidos
     if (isNaN(guests) || guests <= 0) {
       return Response.json({ error: "El número de invitados debe ser un número positivo" }, { status: 400 });
     }
-    if (isNaN(pricePerPlate) || pricePerPlate <= 0) {
+    if (isNaN(newPricePerPlate) || newPricePerPlate <= 0) {
       return Response.json({ error: "El precio por plato debe ser un número positivo" }, { status: 400 });
     }
 
-    // Actualizar el evento en la base de datos
+    // 1. Obtener evento actual con pagos
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
+      include: { payments: true },
+    });
+
+    if (!existingEvent) {
+      return Response.json({ error: "Evento no encontrado" }, { status: 404 });
+    }
+
+    const oldPricePerPlate = existingEvent.pricePerPlate;
+    const totalPaid = existingEvent.payments.reduce((sum, p) => sum + p.amount, 0);
+
+    // 2. Calcular platos pagados al precio anterior
+    const platesAlreadyPaid = Math.floor(totalPaid / oldPricePerPlate);
+    const platesRemaining = Math.max(guests - platesAlreadyPaid, 0);
+
+    // 3. Calcular nuevo balance y total real del evento
+    const newRemainingBalance = platesRemaining * newPricePerPlate;
+    const totalEventCost = (platesAlreadyPaid * oldPricePerPlate) + newRemainingBalance;
+
+    // 4. Actualizar el evento
     const updatedEvent = await prisma.event.update({
-      where: { id: parseInt(data.id) },
+      where: { id: eventId },
       data: {
         guests,
-        pricePerPlate,
-        total: guests * pricePerPlate, // Recalcular el total
-        remainingBalance: guests * pricePerPlate, // Ajustar saldo restante
-        remainingPlates: guests, // Ajustar platos restantes
-        observations: data.observations || null, // Actualizar observaciones
-        menu: data.menu || null, // Actualizar menú
-        fileUrls: data.fileUrls || [], // Actualizar URLs de archivos adjuntos
+        pricePerPlate: newPricePerPlate,
+        total: totalEventCost,
+        remainingBalance: newRemainingBalance,
+        remainingPlates: platesRemaining,
+        observations: data.observations || null,
+        menu: data.menu || null,
+        fileUrls: data.fileUrls || [],
       },
     });
 
     return Response.json(updatedEvent, { status: 200 });
+
   } catch (error) {
     console.error("Error al actualizar el evento:", error);
     return Response.json({ error: "Error interno del servidor" }, { status: 500 });
