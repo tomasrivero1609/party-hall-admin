@@ -387,8 +387,9 @@ useEffect(() => {
           {errors.pricePerPlate && <p className="text-red-500 text-sm">{errors.pricePerPlate}</p>}
         </div>
 
-        {/* Menú y Observaciones */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Menú, Observaciones y Archivos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Menú */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">Menú (Opcional)</label>
             <textarea
@@ -396,10 +397,13 @@ useEffect(() => {
               placeholder="Escribe el menú aquí..."
               value={formData.menu}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
             ></textarea>
-            {errors.menu && <p className="text-red-500 text-sm">{errors.menu}</p>}
+            {errors.menu && <p className="text-red-500 text-sm mt-1">{errors.menu}</p>}
           </div>
+
+          {/* Observaciones */}
           <div>
             <label className="block text-gray-700 font-medium mb-2">Observaciones (Opcional)</label>
             <textarea
@@ -407,21 +411,60 @@ useEffect(() => {
               placeholder="Escribe observaciones aquí..."
               value={formData.observations}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
             ></textarea>
-            {errors.observations && <p className="text-red-500 text-sm">{errors.observations}</p>}
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Cargar Archivo (Opcional)</label>
-            <input
-              type="file"
-              multiple // Habilita la selección de múltiples archivos
-              onChange={(e) => handleFileUpload(e.target.files)} // Maneja un array de archivos
-            />
+            {errors.observations && <p className="text-red-500 text-sm mt-1">{errors.observations}</p>}
           </div>
 
+          {/* Archivos */}
+          <div className="md:col-span-2">
+            <label className="block text-gray-700 font-medium mb-2">Cargar Archivos (Opcional)</label>
+            <div className="flex items-center space-x-4">
+              <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow hover:bg-blue-700 transition">
+                Seleccionar Archivos
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                />
+              </label>
+              <span className="text-sm text-gray-500">Puedes subir varios archivos (PDF, imágenes, etc).</span>
+            </div>
 
+            {/* Vista previa */}
+            {formData.fileUrls?.length > 0 && (
+              <ul className="mt-4 space-y-1 text-sm text-gray-700">
+                {formData.fileUrls.map((url, index) => {
+                  const fileName = url.split("/").pop();
+                  return (
+                    <li key={index} className="flex items-center space-x-2">
+                      <svg
+                        className="h-4 w-4 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M15 10l4.553 4.553a1 1 0 010 1.414l-4.553 4.553M4 6h16M4 12h8m-8 6h8" />
+                      </svg>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline truncate"
+                      >
+                        {fileName}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
+
 
         {/* Datos del Cliente */}
         <h2 className="text-lg font-semibold text-gray-800 mt-6 mb-4">Datos del Cliente</h2>

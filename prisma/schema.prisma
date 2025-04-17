@@ -41,12 +41,13 @@ model Event {
 }
 
 model Payment {
-  id         Int      @id @default(autoincrement())
-  amount     Float
-  payerName  String   // Nombre de la persona que realizó el pago
-  date       String   // Fecha del pago como texto
-  eventId    Int
-  event      Event    @relation(fields: [eventId], references: [id])
+  id                      Int      @id @default(autoincrement())
+  amount                  Float
+  payerName               String
+  date                    String
+  eventId                 Int
+  event                   Event    @relation(fields: [eventId], references: [id])
+  pricePerPlateAtPayment  Float?   // 🆕 Nuevo campo opcional para auditoría
 }
 
 model EventType {

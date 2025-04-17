@@ -11,6 +11,8 @@ import {
   Modal,
   Box,
   Button,
+  Chip,
+  Tooltip,
 } from "@mui/material";
 
 const theme = createTheme({
@@ -86,7 +88,7 @@ const CalendarPage = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
+      <div className="min-h-screen bg-gray-100 pt-20 px-4 flex flex-col items-center">
         <Typography variant="h5" color="primary" className="mb-6 font-bold text-center">
           Calendario de Eventos
         </Typography>
@@ -98,7 +100,7 @@ const CalendarPage = () => {
             onChange={handleMonthYearChange}
             fullWidth
             variant="outlined"
-            label=""
+            label="Mes"
           />
         </div>
 
@@ -111,7 +113,7 @@ const CalendarPage = () => {
             )}
             eventClick={handleEventClick}
             headerToolbar={{
-              left: "prev,next",
+              left: "prev,next today",
               center: "title",
               right: "dayGridMonth",
             }}
@@ -141,19 +143,27 @@ const CalendarPage = () => {
           }}>
             {selectedEvent && (
               <>
-                <Typography variant="h6" gutterBottom>
-                  {selectedEvent.title}
+                <Typography variant="h6" gutterBottom>{selectedEvent.title}</Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  <strong>Fecha:</strong> {selectedEvent.start.toISOString().substring(0, 10)}
                 </Typography>
-                <Typography variant="body1"><strong>Fecha:</strong> {selectedEvent.start.toISOString().substring(0, 10)}</Typography>
-                <Typography variant="body1"><strong>Tipo de evento:</strong> {selectedEvent.extendedProps.eventType}</Typography>
+                <Chip label={selectedEvent.extendedProps.eventType} size="small" color="primary" className="mb-2" />
                 <Typography variant="body1"><strong>Vendedor:</strong> {selectedEvent.extendedProps.seller}</Typography>
                 <Typography variant="body1"><strong>Invitados:</strong> {selectedEvent.extendedProps.guests}</Typography>
                 <Typography variant="body1"><strong>Total:</strong> ${selectedEvent.extendedProps.total}</Typography>
                 <Typography variant="body1"><strong>Saldo restante:</strong> ${selectedEvent.extendedProps.remainingBalance}</Typography>
                 <Typography variant="body1"><strong>Dirección:</strong> {selectedEvent.extendedProps.address}</Typography>
                 <Typography variant="body1"><strong>Teléfono:</strong> {selectedEvent.extendedProps.phone}</Typography>
-                {selectedEvent.extendedProps.observations && <Typography variant="body2"><strong>Observaciones:</strong> {selectedEvent.extendedProps.observations}</Typography>}
-                <Button variant="contained" color="primary" onClick={() => setOpenModal(false)} sx={{ mt: 2, width: "100%" }}>Cerrar</Button>
+                {selectedEvent.extendedProps.observations && (
+                  <Tooltip title={selectedEvent.extendedProps.observations} placement="top">
+                    <Typography variant="body2" color="textSecondary">
+                      <strong>Observaciones:</strong> {selectedEvent.extendedProps.observations}
+                    </Typography>
+                  </Tooltip>
+                )}
+                <Button variant="contained" color="primary" onClick={() => setOpenModal(false)} sx={{ mt: 2, width: "100%" }}>
+                  Cerrar
+                </Button>
               </>
             )}
           </Box>

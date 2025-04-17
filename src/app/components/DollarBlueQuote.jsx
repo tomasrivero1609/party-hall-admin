@@ -10,12 +10,10 @@ const CurrencyQuote = () => {
 
   useEffect(() => {
     const fetchQuotes = async () => {
-      console.log("Actualizando cotización a las:", new Date().toLocaleTimeString());
       try {
         const response = await fetch("https://api.bluelytics.com.ar/v2/latest");
-        if (!response.ok) {
-          throw new Error("Error al cargar la cotización");
-        }
+        if (!response.ok) throw new Error("Error al cargar la cotización");
+
         const data = await response.json();
         setQuotes({
           dolar: data.oficial,
@@ -25,61 +23,58 @@ const CurrencyQuote = () => {
         });
         setLastUpdate(data.last_update);
       } catch (err) {
-        console.error("Error al obtener los datos:", err);
-        setError("No se pudo cargar la cotización. Inténtalo más tarde.");
+        setError("No se pudo cargar la cotización.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchQuotes();
-    const interval = setInterval(fetchQuotes, 60000); // Actualiza cada 60 segundos
+    const interval = setInterval(fetchQuotes, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return null;
-  if (error) return null;
+  if (loading || error) return null;
 
   return (
-    <div className="p-3 bg-white shadow-lg rounded-lg border border-gray-300 z-50 text-sm mb-6">
-      <h2 className="text-md font-semibold text-center text-blue-600">Cotización</h2>
-      <table className="w-full mt-2 border-collapse">
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-4 text-sm w-full mb-6">
+      <h3 className="text-blue-600 font-semibold text-center text-base mb-2">Cotización del Día</h3>
+      <table className="w-full text-center text-sm">
         <thead>
-          <tr className="bg-gray-200 text-gray-700">
-            <th className="p-1 text-left text-xs">Moneda</th>
-            <th className="p-1 text-center text-xs">Compra</th>
-            <th className="p-1 text-center text-xs">Venta</th>
+          <tr className="bg-gray-100 text-gray-600">
+            <th className="py-1">Moneda</th>
+            <th className="py-1">Compra</th>
+            <th className="py-1">Venta</th>
           </tr>
         </thead>
         <tbody>
           {quotes && (
             <>
-              <tr className="border-t">
-                <td className="p-1 text-xs">Dólar Oficial</td>
-                <td className="p-1 text-center text-xs">{quotes.dolar.value_buy}</td>
-                <td className="p-1 text-center text-xs">{quotes.dolar.value_sell}</td>
-              </tr>
-              <tr className="border-t">
-                <td className="p-1 text-xs">Dólar Blue</td>
-                <td className="p-1 text-center text-xs">{quotes.blue.value_buy}</td>
-                <td className="p-1 text-center text-xs">{quotes.blue.value_sell}</td>
-              </tr>
-              <tr className="border-t">
-                <td className="p-1 text-xs">Euro Oficial</td>
-                <td className="p-1 text-center text-xs">{quotes.euro.value_buy}</td>
-                <td className="p-1 text-center text-xs">{quotes.euro.value_sell}</td>
-              </tr>
-              <tr className="border-t">
-                <td className="p-1 text-xs">Euro Blue</td>
-                <td className="p-1 text-center text-xs">{quotes.blueEuro.value_buy}</td>
-                <td className="p-1 text-center text-xs">{quotes.blueEuro.value_sell}</td>
-              </tr>
+              <CurrencyRow name="Dólar Oficial" quote={quotes.dolar} />
+              <CurrencyRow name="Dólar Blue" quote={quotes.blue} />
+              <CurrencyRow name="Euro Oficial" quote={quotes.euro} />
+              <CurrencyRow name="Euro Blue" quote={quotes.blueEuro} />
             </>
           )}
         </tbody>
       </table>
-      <p className="text-xs text-gray-500 mt-1 text-center">Actualizado: {new Date(lastUpdate).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</p>
+      <p className="text-xs text-gray-500 text-center mt-2">
+        Actualizado:{" "}
+        {new Date(lastUpdate).toLocaleTimeString("es-AR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </p>
     </div>
   );
 };
+
+const CurrencyRow = ({ name, quote }) => (
+  <tr className="border-t">
+    <td className="py-1">{name}</td>
+    <td className="py-1">{quote.value_buy}</td>
+    <td className="py-1">{quote.value_sell}</td>
+  </tr>
+);
 
 export default CurrencyQuote;

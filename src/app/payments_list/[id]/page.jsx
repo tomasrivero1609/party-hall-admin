@@ -7,11 +7,11 @@ import { useRouter, useParams } from "next/navigation";
 const PaymentListById = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [itemsPerPage] = useState(10); // Número de pagos por página
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const router = useRouter();
-  const params = useParams(); // Obtener parámetros de la URL
-  const eventId = params.id; // Extraer el ID del evento
+  const params = useParams();
+  const eventId = params.id;
 
   useEffect(() => {
     const fetchPayments = async () => {
@@ -19,22 +19,17 @@ const PaymentListById = () => {
         const response = await fetch(`/api/payments?eventId=${eventId}`);
         const data = await response.json();
 
-        if (!Array.isArray(data)) {
-          throw new Error("La respuesta no es un array válido");
-        }
-
+        if (!Array.isArray(data)) throw new Error("La respuesta no es un array válido");
         setPayments(data);
       } catch (error) {
         console.error("Error fetching payments:", error.message);
-        setPayments([]); // Establecer un estado vacío en caso de error
+        setPayments([]);
       } finally {
         setLoading(false);
       }
     };
 
-    if (eventId) {
-      fetchPayments();
-    }
+    if (eventId) fetchPayments();
   }, [eventId]);
 
   if (loading) {
@@ -45,7 +40,6 @@ const PaymentListById = () => {
     );
   }
 
-  // Función para formatear montos
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-AR", {
       style: "currency",
@@ -53,107 +47,84 @@ const PaymentListById = () => {
     }).format(amount);
   };
 
-  // Calcular los pagos a mostrar en la página actual
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = payments.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Cambiar de página
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
 
-  // Calcular el número total de páginas
   const totalPages = Math.ceil(payments.length / itemsPerPage);
 
-  // Calcular el total acumulado de los pagos
   const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
 
+  const totalPlatesCovered = payments.reduce((sum, payment) => {
+    const price = parseFloat(payment.pricePerPlateAtPayment);
+    const plates = price && !isNaN(price) ? Math.floor(payment.amount / price) : 0;
+    return sum + plates;
+  }, 0);
+
   const exportToExcel = (payments) => {
-    // Crear un array con los encabezados y los datos
     const data = [
-      ["Nombre del Pagador", "Monto", "Fecha"], // Encabezados
-      ...payments.map((payment) => [
-        payment.payerName,
-        formatCurrency(payment.amount), // Formatear monto
-        payment.date,
-      ]),
+      ["Nombre del Pagador", "Monto", "Fecha", "Platos Cubiertos"],
+      ...payments.map((payment) => {
+        const price = parseFloat(payment.pricePerPlateAtPayment);
+        const plates = price && !isNaN(price) ? Math.floor(payment.amount / price) : 0;
+        return [
+          payment.payerName,
+          formatCurrency(payment.amount),
+          payment.date,
+          plates,
+        ];
+      }),
     ];
 
-    // Crear una hoja de cálculo
     const worksheet = XLSX.utils.aoa_to_sheet(data);
-
-    // Aplicar estilos a la hoja de cálculo
     applyStyles(worksheet, data);
-
-    // Crear un libro de Excel
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Pagos");
-
-    // Generar el archivo Excel
     XLSX.writeFile(workbook, "pagos_evento.xlsx");
   };
 
   const applyStyles = (worksheet, data) => {
-    // Estilo para los encabezados
     const headerStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" } }, // Texto blanco
-      fill: { fgColor: { rgb: "4F81BD" } }, // Fondo azul
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "4F81BD" } },
       alignment: { horizontal: "center" },
       border: {
-        top: { style: "thin", color: { auto: 1 } },
-        bottom: { style: "thin", color: { auto: 1 } },
-        left: { style: "thin", color: { auto: 1 } },
-        right: { style: "thin", color: { auto: 1 } },
+        top: { style: "thin" }, bottom: { style: "thin" },
+        left: { style: "thin" }, right: { style: "thin" },
       },
     };
 
-    // Estilo para las filas pares
-    const evenRowStyle = {
-      fill: { fgColor: { rgb: "DDEBF7" } }, // Fondo azul claro
+    const rowStyle = (even) => ({
+      fill: { fgColor: { rgb: even ? "DDEBF7" : "FFFFFF" } },
       alignment: { horizontal: "center" },
       border: {
-        top: { style: "thin", color: { auto: 1 } },
-        bottom: { style: "thin", color: { auto: 1 } },
-        left: { style: "thin", color: { auto: 1 } },
-        right: { style: "thin", color: { auto: 1 } },
+        top: { style: "thin" }, bottom: { style: "thin" },
+        left: { style: "thin" }, right: { style: "thin" },
       },
-    };
+    });
 
-    // Estilo para las filas impares
-    const oddRowStyle = {
-      fill: { fgColor: { rgb: "FFFFFF" } }, // Fondo blanco
-      alignment: { horizontal: "center" },
-      border: {
-        top: { style: "thin", color: { auto: 1 } },
-        bottom: { style: "thin", color: { auto: 1 } },
-        left: { style: "thin", color: { auto: 1 } },
-        right: { style: "thin", color: { auto: 1 } },
-      },
-    };
-
-    // Aplicar estilo a los encabezados
     for (let col = 0; col < data[0].length; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col }); // Fila 0, columna col
-      worksheet[cellAddress].s = headerStyle;
+      const cell = XLSX.utils.encode_cell({ r: 0, c: col });
+      worksheet[cell].s = headerStyle;
     }
 
-    // Aplicar estilo a las filas de datos
     for (let row = 1; row < data.length; row++) {
       for (let col = 0; col < data[row].length; col++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-        if (!worksheet[cellAddress]) {
-          worksheet[cellAddress] = { v: "" }; // Crear la celda si no existe
-        }
-        worksheet[cellAddress].s = row % 2 === 0 ? evenRowStyle : oddRowStyle; // Alternar estilos
+        const cell = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!worksheet[cell]) worksheet[cell] = { v: "" };
+        worksheet[cell].s = rowStyle(row % 2 === 0);
       }
     }
 
-    // Ajustar el ancho de las columnas
     worksheet["!cols"] = [
-      { wch: 30 }, // Ancho para "Nombre del Pagador"
-      { wch: 15 }, // Ancho para "Monto"
-      { wch: 15 }, // Ancho para "Fecha"
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 20 },
     ];
   };
 
@@ -161,47 +132,51 @@ const PaymentListById = () => {
     <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Pagos del Evento</h2>
 
-      {/* Verificar si hay pagos disponibles */}
       {payments.length === 0 ? (
         <div className="text-center text-gray-600">
           <p>No hay pagos disponibles para este evento.</p>
         </div>
       ) : (
         <>
-          {/* Tabla de pagos */}
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
-                    Nombre del Pagador
-                  </th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Nombre del Pagador</th>
                   <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Monto</th>
                   <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Fecha</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Platos cubiertos</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {currentItems.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50 transition duration-300">
-                    <td className="py-3 px-4 text-sm text-gray-800">{payment.payerName}</td>
-                    <td className="py-3 px-4 text-sm text-gray-800 font-medium">
-                      {formatCurrency(payment.amount)}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">{payment.date}</td>
-                  </tr>
-                ))}
+                {currentItems.map((payment) => {
+                  const price = parseFloat(payment.pricePerPlateAtPayment);
+                  const platesCovered = price && !isNaN(price) ? Math.floor(payment.amount / price) : 0;
+
+                  return (
+                    <tr key={payment.id} className="hover:bg-gray-50 transition duration-300">
+                      <td className="py-3 px-4 text-sm text-gray-800">{payment.payerName}</td>
+                      <td className="py-3 px-4 text-sm text-gray-800 font-medium">
+                        {formatCurrency(payment.amount)}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{payment.date}</td>
+                      <td className="py-3 px-4 text-sm text-gray-700">{platesCovered}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* Total de pagos */}
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-between">
             <p className="text-lg font-bold text-gray-800">
-              Total: {formatCurrency(totalAmount)}
+              Total pagado: {formatCurrency(totalAmount)}
+            </p>
+            <p className="text-lg font-bold text-gray-800">
+              Total platos cubiertos: {totalPlatesCovered}
             </p>
           </div>
 
-          {/* Paginador */}
           {totalPages > 1 && (
             <div className="mt-6 flex justify-center items-center space-x-2">
               <button
@@ -244,7 +219,6 @@ const PaymentListById = () => {
         </>
       )}
 
-      {/* Botones adicionales */}
       <div className="mt-6 flex justify-between items-center">
         <Link href="/eventsdetails" className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition">
           Volver a Eventos
@@ -256,7 +230,7 @@ const PaymentListById = () => {
           Agregar Pago
         </button>
         <button
-          onClick={() => exportToExcel(payments)} // Llama a la función para exportar
+          onClick={() => exportToExcel(payments)}
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
         >
           Exportar a Excel

@@ -73,9 +73,10 @@ export async function POST(request) {
     const payment = await prisma.payment.create({
       data: {
         amount,
-        payerName: data.payerName, // Asegúrate de incluir el campo payerName
-        date: data.date, // Fecha como texto
-        eventId: parseInt(data.eventId),
+        payerName: data.payerName,
+        date: data.date,
+        eventId: parseInt(data.eventId), // ✅ corregido
+        pricePerPlateAtPayment: event.pricePerPlate,
       },
     });
 
