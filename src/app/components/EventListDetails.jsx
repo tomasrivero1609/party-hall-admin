@@ -47,6 +47,11 @@ const EventList = ({ events: initialEvents }) => {
     );
   };
 
+  const currencySymbolMap = {
+    ARS: "$",
+    USD: "U$S",
+  };
+
   // Función para formatear una hora UTC al huso horario de Argentina
   const formatToLocalTimeOnly = (utcDate) => {
     if (!utcDate) return "N/A";
@@ -393,10 +398,10 @@ const EventList = ({ events: initialEvents }) => {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">{event.guests}</td>
                     <td className="py-3 px-4 text-sm text-gray-800 font-medium">
-                      ${formatNumber(event.total)}
+                      {currencySymbolMap[event.currency]}{formatNumber(event.total)}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-800 font-medium">
-                      ${formatNumber(event.remainingBalance)}
+                      {currencySymbolMap[event.currency]}{formatNumber(event.remainingBalance)}
                     </td>
                     {/* Nueva columna para recordatorios */}
                     <td className="py-3 px-4 text-sm text-gray-600">
@@ -562,10 +567,13 @@ const EventList = ({ events: initialEvents }) => {
                       <strong>Invitados:</strong> {selectedEvent.guests}
                     </p>
                     <p className="text-sm text-gray-500">
-                      <strong>Total:</strong> ${formatNumber(selectedEvent.total)}
+                      <strong>Total:</strong> {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.total)}
                     </p>
                     <p className="text-sm text-gray-500">
-                      <strong>Saldo Restante:</strong> ${formatNumber(selectedEvent.remainingBalance)}
+                      <strong>Saldo Restante:</strong> {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.remainingBalance)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      <strong>Precio por Plato:</strong> {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.pricePerPlate)}
                     </p>
                     <p className="text-sm text-gray-500">
                       <strong>Hora de Inicio:</strong> {formatToLocalTimeOnly(selectedEvent.startTime)}

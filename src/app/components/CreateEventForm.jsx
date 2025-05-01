@@ -27,6 +27,9 @@ const eventSchema = z.object({
   address: z.string().min(1, "La dirección es obligatoria"),
   familyNames: z.string().optional(), // Nombre de familiares (opcional)
   sellerId: z.string().min(1, "El vendedor es obligatorio"), // Añade esta línea
+  currency: z.enum(["ARS", "USD"], {
+    required_error: "La moneda es obligatoria",
+  }),
 });
 
 const CreateEventForm = () => {
@@ -100,6 +103,7 @@ const CreateEventForm = () => {
     email: "",
     address: "",
     familyNames: "",
+    currency: "ARS", // ← por defecto pesos
   });
   const [errors, setErrors] = useState({});
   const [eventTypes, setEventTypes] = useState([]); // Estado para almacenar los tipos de eventos
@@ -386,6 +390,19 @@ useEffect(() => {
           />
           {errors.pricePerPlate && <p className="text-red-500 text-sm">{errors.pricePerPlate}</p>}
         </div>
+        <div>
+        <label className="block text-gray-700 font-medium mb-2">Moneda</label>
+        <select
+          name="currency"
+          value={formData.currency}
+          onChange={handleChange}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="ARS">Peso Argentino ($)</option>
+          <option value="USD">Dólar Estadounidense (U$S)</option>
+        </select>
+        {errors.currency && <p className="text-red-500 text-sm">{errors.currency}</p>}
+      </div>
 
         {/* Menú, Observaciones y Archivos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

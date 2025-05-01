@@ -10,12 +10,12 @@ datasource db {
 
 model Seller {
   id      Int      @id @default(autoincrement())
-  name    String   @unique // Nombre del vendedor (único)
-  events  Event[]  // Relación: Un vendedor puede tener muchos eventos
+  name    String   @unique
+  events  Event[]
 }
 
 model Event {
-  id                  Int         @id @default(autoincrement())
+  id                  Int             @id @default(autoincrement())
   name                String
   date                DateTime
   guests              Int
@@ -23,21 +23,22 @@ model Event {
   total               Float
   remainingBalance    Float
   remainingPlates     Int
-  eventType           EventType   @relation(fields: [eventTypeId], references: [id])
+  eventType           EventType       @relation(fields: [eventTypeId], references: [id])
   eventTypeId         Int
-  seller              Seller?     @relation(fields: [sellerId], references: [id]) // Relación opcional
-  sellerId            Int?        // Hacer el campo opcional temporalmente
+  seller              Seller?         @relation(fields: [sellerId], references: [id])
+  sellerId            Int?
   payments            Payment[]
-  lastPaymentDate     DateTime?  // Fecha del último pago (opcional)
-  menu                String?     // Menú - Opcional
-  observations        String?     // Observaciones - Opcional
-  fileUrls            String[]    // Array de URLs de archivos (opcional)
-  startTime           DateTime?   // Hora de inicio - Opcional
-  endTime             DateTime?   // Hora de finalización - Opcional
-  phone               String?     // Teléfono - Opcional
-  email               String?     // Mail - Opcional
-  address             String?     // Dirección - Opcional
-  familyNames         String?     // Nombre de familiares - Opcional
+  lastPaymentDate     DateTime?
+  menu                String?
+  observations        String?
+  fileUrls            String[]
+  startTime           DateTime?
+  endTime             DateTime?
+  phone               String?
+  email               String?
+  address             String?
+  familyNames         String?
+  currency            CurrencySymbol  @default(ARS) // 💸 Enum con control
 }
 
 model Payment {
@@ -47,7 +48,7 @@ model Payment {
   date                    String
   eventId                 Int
   event                   Event    @relation(fields: [eventId], references: [id])
-  pricePerPlateAtPayment  Float?   // 🆕 Nuevo campo opcional para auditoría
+  pricePerPlateAtPayment  Float?
 }
 
 model EventType {
@@ -55,4 +56,9 @@ model EventType {
   name      String   @unique
   color     String
   events    Event[]
+}
+
+enum CurrencySymbol {
+  ARS // $
+  USD // U$S
 }

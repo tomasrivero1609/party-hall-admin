@@ -32,6 +32,8 @@ export default function PaymentForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [pricePerPlate, setPricePerPlate] = useState(null);
+  const [currency, setCurrency] = useState("ARS");
+  const [eventName, setEventName] = useState("");
   const [platesCovered, setPlatesCovered] = useState(0);
 
   useEffect(() => {
@@ -39,20 +41,24 @@ export default function PaymentForm() {
       try {
         const res = await fetch(`/api/payments?eventId=${id}`);
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0 && data[0].event?.pricePerPlate) {
-          setPricePerPlate(data[0].event.pricePerPlate);
+
+        if (Array.isArray(data.payments) && data.payments.length > 0) {
+          const event = data.payments[0].event;
+          if (event?.pricePerPlate) setPricePerPlate(event.pricePerPlate);
+          if (event?.currency) setCurrency(event.currency);
+          if (event?.name) setEventName(event.name);
         } else {
-          // Fallback: buscar directamente el evento
           const res2 = await fetch(`/api/events/${id}`);
           const eventData = await res2.json();
-          if (eventData?.pricePerPlate) {
-            setPricePerPlate(eventData.pricePerPlate);
-          }
+          if (eventData?.pricePerPlate) setPricePerPlate(eventData.pricePerPlate);
+          if (eventData?.currency) setCurrency(eventData.currency);
+          if (eventData?.name) setEventName(eventData.name);
         }
       } catch (error) {
         console.error("Error al obtener el precio del evento:", error);
       }
     };
+
     if (id) fetchEventPrice();
   }, [id]);
 
@@ -90,7 +96,7 @@ export default function PaymentForm() {
       });
 
       if (response.ok) {
-        setLastPaymentData({ ...formData, eventName: `Evento ${id}` });
+        setLastPaymentData({ ...formData, eventName });
         setShowSuccessMessage(true);
         setFormData({ eventId: id, amount: "", payerName: "", date: "" });
         setErrors({});
@@ -114,6 +120,14 @@ export default function PaymentForm() {
     }
   };
 
+  const formatAmount = (value) => {
+    if (!value) return "";
+    const numericValue = value.replace(/\D/g, "");
+    const symbols = { ARS: "$", USD: "U$S" };
+    const symbol = symbols[currency] || "$";
+    return `${symbol}${new Intl.NumberFormat("es-AR").format(numericValue)}`;
+  };
+
   const generateReceipt = () => {
     if (!lastPaymentData) return;
     const doc = new jsPDF();
@@ -134,10 +148,14 @@ export default function PaymentForm() {
     doc.line(margin, yPos, pageWidth - margin, yPos);
     yPos += 10;
 
+    const amountText = getAmountInWords(lastPaymentData.amount);
+    const currencyText = currency === "USD" ? "dólares" : "pesos";
+    const symbol = currency === "USD" ? "U$S" : "$";
+
     const data = [
       ["Evento:", lastPaymentData.eventName],
-      ["Monto:", `$${lastPaymentData.amount}`],
-      ["Monto en letras:", getAmountInWords(lastPaymentData.amount)],
+      ["Monto:", `${symbol}${lastPaymentData.amount}`],
+      ["Monto en letras:", `${amountText} ${currencyText}`],
       ["Pagador:", lastPaymentData.payerName],
       ["Fecha:", lastPaymentData.date],
     ];
@@ -177,12 +195,6 @@ export default function PaymentForm() {
     router.push(`/payments_list/${id}`);
   };
 
-  const formatAmount = (value) => {
-    if (!value) return "";
-    const numericValue = value.replace(/\D/g, "");
-    return new Intl.NumberFormat("es-AR").format(numericValue);
-  };
-
   return (
     <div className="max-w-md mx-auto p-6 bg-white shadow-md rounded-lg mt-16">
       {showSuccessMessage && (
@@ -210,7 +222,7 @@ export default function PaymentForm() {
             placeholder="Monto del pago"
             value={formatAmount(formData.amount)}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
           />
           {errors.amount && <p className="text-red-500 text-sm">{errors.amount}</p>}
           {!isNaN(platesCovered) && platesCovered > 0 && (

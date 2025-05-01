@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 
 const PaymentListById = () => {
   const [payments, setPayments] = useState([]);
+  const [currency, setCurrency] = useState("ARS");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -19,8 +20,9 @@ const PaymentListById = () => {
         const response = await fetch(`/api/payments?eventId=${eventId}`);
         const data = await response.json();
 
-        if (!Array.isArray(data)) throw new Error("La respuesta no es un array válido");
-        setPayments(data);
+        if (!Array.isArray(data.payments)) throw new Error("La respuesta no es un array válido");
+        setPayments(data.payments);
+        setCurrency(data.currency || "ARS");
       } catch (error) {
         console.error("Error fetching payments:", error.message);
         setPayments([]);
@@ -32,19 +34,10 @@ const PaymentListById = () => {
     if (eventId) fetchPayments();
   }, [eventId]);
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16 text-center">
-        <p className="text-gray-600">Cargando pagos...</p>
-      </div>
-    );
-  }
-
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: "ARS",
-    }).format(amount);
+    const symbols = { ARS: "$", USD: "U$S" };
+    const symbol = symbols[currency] || "$";
+    return `${symbol}${amount.toLocaleString("es-AR")}`;
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -56,7 +49,6 @@ const PaymentListById = () => {
   };
 
   const totalPages = Math.ceil(payments.length / itemsPerPage);
-
   const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
 
   const totalPlatesCovered = payments.reduce((sum, payment) => {
@@ -128,6 +120,14 @@ const PaymentListById = () => {
     ];
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16 text-center">
+        <p className="text-gray-600">Cargando pagos...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-md mt-16">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Pagos del Evento</h2>
@@ -143,7 +143,9 @@ const PaymentListById = () => {
               <thead className="bg-gray-100">
                 <tr>
                   <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Nombre del Pagador</th>
-                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Monto</th>
+                  <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">
+                    Monto ({currency})
+                  </th>
                   <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Fecha</th>
                   <th className="py-3 px-4 text-left text-sm font-semibold text-gray-600">Platos cubiertos</th>
                 </tr>
@@ -170,7 +172,7 @@ const PaymentListById = () => {
 
           <div className="mt-6 flex justify-between">
             <p className="text-lg font-bold text-gray-800">
-              Total pagado: {formatCurrency(totalAmount)}
+              Total pagado: {formatCurrency(totalAmount)} ({currency})
             </p>
             <p className="text-lg font-bold text-gray-800">
               Total platos cubiertos: {totalPlatesCovered}
@@ -188,7 +190,6 @@ const PaymentListById = () => {
               >
                 Anterior
               </button>
-
               {[...Array(totalPages).keys()].map((page) => (
                 <button
                   key={page + 1}
@@ -202,7 +203,6 @@ const PaymentListById = () => {
                   {page + 1}
                 </button>
               ))}
-
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}

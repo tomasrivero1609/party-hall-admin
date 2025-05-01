@@ -19,22 +19,32 @@ export async function GET(request) {
           event: true, // Incluye el evento relacionado
         },
       });
+
+      // También obtener la moneda del evento
+      const event = await prisma.event.findUnique({
+        where: { id: parseInt(eventId) },
+        select: { currency: true },
+      });
+
+      return Response.json({
+        payments,
+        currency: event?.currency || "ARS",
+      });
     } else {
       // Si no se proporciona un ID, obtener todos los pagos
       payments = await prisma.payment.findMany({
         include: {
-          event: true, // Incluye el evento relacionado
+          event: true,
         },
       });
-    }
 
-    return Response.json(payments); // Devuelve la lista de pagos
+      return Response.json({ payments }); // En este caso, solo devolvemos pagos
+    }
   } catch (error) {
     console.error("Error fetching payments:", error);
     return Response.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
-
 export async function POST(request) {
   try {
     const data = await request.json();

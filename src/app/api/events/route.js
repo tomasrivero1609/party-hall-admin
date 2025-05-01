@@ -92,6 +92,7 @@ export async function POST(request) {
         email: data.email || "",
         address: data.address || "",
         familyNames: data.familyNames || "",
+        currency: data.currency || "ARS", // ← AÑADIR ESTA LÍNEA
       },
     });
 
