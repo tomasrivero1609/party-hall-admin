@@ -1,8 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafbfc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #3b82f6;
+  --radius: 0.75rem;
 }
 
 @theme inline {
@@ -12,92 +27,451 @@
   --font-mono: var(--font-geist-mono);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  font-variation-settings: 'opsz' 32;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Estilos minimalistas para FullCalendar */
+/* Utility classes */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced button styles */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-xl shadow-lg hover:shadow-xl border border-gray-200 transition-all duration-300 transform hover:scale-105 active:scale-95;
+}
+
+.btn-ghost {
+  @apply bg-transparent hover:bg-gray-100 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-300;
+}
+
+/* Card styles */
+.card {
+  @apply bg-white rounded-2xl shadow-lg border border-gray-100 transition-all duration-300 hover:shadow-xl;
+}
+
+.card-hover {
+  @apply hover:shadow-2xl hover:-translate-y-1;
+}
+
+/* Navigation link styles */
+.nav-link {
+  @apply text-gray-600 hover:text-blue-600 font-medium transition-all duration-300 relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -4px;
+  left: 50%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Form styles */
+.form-input {
+  @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-300 bg-white;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+/* Loading spinner */
+.spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+}
+
+/* Estilos mejorados para FullCalendar */
+.fc {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
 .fc .fc-daygrid-day-frame {
-  padding: 0.5rem; /* Espaciado reducido */
+  padding: 0.75rem;
+  min-height: 120px;
 }
-
 
 .fc .fc-daygrid-event {
-  margin: 0.25rem 0; /* Espaciado entre eventos */
-  padding: 0.25rem 0.5rem; /* Padding interno de los eventos */
-  border-radius: 0.25rem; /* Bordes redondeados */
-  background-color: #e5f3ff; /* Color de fondo minimalista */
-  border: none; /* Sin bordes */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+  margin: 0.25rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.fc .fc-daygrid-event:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .fc .fc-daygrid-day-number {
-  font-size: 0.875rem; /* Tamaño de fuente más pequeño */
-  color: #333; /* Color de texto oscuro */
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  padding: 0.5rem;
+}
+
+.fc .fc-col-header-cell {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: none;
+  padding: 1rem 0;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
 }
 
 .fc .fc-toolbar-title {
-  font-size: 1.25rem; /* Título más pequeño */
-  font-weight: 600; /* Fuente semibold */
-  color: #333; /* Color de texto oscuro */
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: 'Poppins', sans-serif;
 }
 
 .fc .fc-button {
-  background-color: #fff; /* Botones blancos */
-  border: 1px solid #ddd; /* Borde ligero */
-  color: #333; /* Texto oscuro */
-  font-size: 0.875rem; /* Tamaño de fuente reducido */
-  padding: 0.25rem 0.5rem; /* Padding reducido */
-  border-radius: 0.25rem; /* Bordes redondeados */
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.fc .fc-button:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active {
-  background-color: #007bff; /* Color primario al hacer clic */
-  border-color: #007bff; /* Borde del botón activo */
-  color: #fff; /* Texto blanco */
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Agrega estos estilos en tu archivo CSS global o en el archivo correspondiente de Tailwind */
+.fc .fc-daygrid-day.fc-day-today {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+/* Estilos para eventos personalizados */
 .custom-event {
-  border-radius: 8px; /* Bordes redondeados */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-  transition: transform 0.3s ease-in-out;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
 }
 
 .custom-event:hover {
-  transform: scale(1.05); /* Escala ligeramente el evento al pasar el cursor */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Sombra más fuerte al hacer hover */
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
+/* Animaciones mejoradas */
 .animate-slide-out {
-  animation: slideOut 0.3s ease-in-out forwards;
+  animation: slideOutImproved 0.4s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
-@keyframes slideOut {
+@keyframes slideOutImproved {
   from {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
   to {
-    transform: translateX(100%);
+    transform: translateX(100%) scale(0.8);
     opacity: 0;
   }
 }
 
 .animate-slide-in {
-  animation: slideIn 0.3s ease-out;
+  animation: slideInImproved 0.4s cubic-bezier(0, 0, 0.2, 1);
 }
 
-@keyframes slideIn {
+@keyframes slideInImproved {
   from {
-    transform: translateX(100%);
+    transform: translateX(100%) scale(0.8);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+
+/* Efectos de focus mejorados */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white;
+}
+
+/* Transiciones suaves para elementos interactivos */
+.interactive {
+  @apply transition-all duration-300 ease-out;
+}
+
+.interactive:hover {
+  @apply transform scale-105;
+}
+
+.interactive:active {
+  @apply transform scale-95;
+}
+
+/* Estilos para el menú desplegable mejorado */
+.dropdown-menu-container {
+  position: relative;
+}
+
+.dropdown-menu-items {
+  position: absolute;
+  right: 0;
+  z-index: 9999;
+  margin-top: 4px;
+  width: 16rem; /* w-64 */
+  background-color: white;
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* shadow-2xl */
+  overflow: hidden;
+  transform-origin: top right;
+  transition: all 0.2s ease-out;
+  /* Tamaño fijo para consistencia */
+  min-height: 200px;
+  max-height: 350px;
+}
+
+/* Posicionamiento inteligente para evitar que se corte */
+.dropdown-menu-items.position-up {
+  bottom: 100%;
+  top: auto;
+  margin-top: 0;
+  margin-bottom: 4px;
+  transform-origin: bottom right;
+}
+
+/* Animaciones de entrada y salida mejoradas */
+.dropdown-menu-items[data-headlessui-state="open"] {
+  opacity: 1;
+  transform: scale(1);
+  visibility: visible;
+}
+
+.dropdown-menu-items[data-headlessui-state="closed"] {
+  opacity: 0;
+  transform: scale(0.95);
+  visibility: hidden;
+}
+
+/* Prevenir scroll del body cuando el menú está abierto */
+body.menu-open {
+  overflow: hidden;
+}
+
+/* Mejorar el espaciado de los elementos del menú */
+.dropdown-menu-items .menu-item {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-menu-items .menu-item:hover {
+  background-color: #f3f4f6; /* hover:bg-gray-50 */
+}
+
+.dropdown-menu-items .menu-item.blue:hover {
+  background-color: #eff6ff; /* hover:bg-blue-50 */
+  color: #1d4ed8; /* text-blue-700 */
+}
+
+.dropdown-menu-items .menu-item.yellow:hover {
+  background-color: #fefce8; /* hover:bg-yellow-50 */
+  color: #a16207; /* text-yellow-700 */
+}
+
+.dropdown-menu-items .menu-item.green:hover {
+  background-color: #f0fdf4; /* hover:bg-green-50 */
+  color: #15803d; /* text-green-700 */
+}
+
+.dropdown-menu-items .menu-item.red:hover {
+  background-color: #fef2f2; /* hover:bg-red-50 */
+  color: #dc2626; /* text-red-700 */
+}
+
+/* Separador mejorado */
+.dropdown-menu-separator {
+  border-top: 1px solid #e5e7eb;
+  margin: 8px 0;
+}
+
+/* Estilos específicos para cuando hay pocos eventos */
+.dropdown-menu-items.few-events {
+  /* Altura controlada dinámicamente por JavaScript */
+}
+
+/* Responsive: En pantallas pequeñas, hacer el menú más ancho y ajustar posición */
+@media (max-width: 640px) {
+  .dropdown-menu-items {
+    width: 18rem; /* w-72 */
+    right: -2rem; /* Ajustar para que no se salga de la pantalla */
+  }
+  
+  .dropdown-menu-items.position-up {
+    right: -2rem;
+  }
+}
+
+/* Mejoras para la tabla - tamaño consistente */
+.events-table-container {
+  min-height: 500px; /* Altura fija más grande */
+  position: relative;
+}
+
+/* Asegurar que el contenedor de la tabla tenga overflow visible para el menú */
+.events-table-container .overflow-x-auto {
+  overflow-y: visible;
+  min-height: 450px; /* Altura mínima para el contenido de la tabla */
+}
+
+/* Mejorar la visibilidad del menú en cualquier contexto */
+.dropdown-menu-items {
+  /* Asegurar que el menú esté siempre por encima de otros elementos */
+  z-index: 99999;
+}
+
+/* Estilo para el botón del menú cuando está activo */
+.dropdown-menu-container [data-headlessui-state="open"] {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+/* Estilos específicos para el modal */
+.modal-close-button {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  backdrop-filter: blur(4px);
+}
+
+.modal-close-button:hover {
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+.modal-close-button svg {
+  color: white !important;
+  stroke: white !important;
+  stroke-width: 2 !important;
+}
+
+.modal-event-type {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(4px);
+}
+
+.modal-status-badge {
+  font-weight: 600 !important;
+  border-width: 1px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
