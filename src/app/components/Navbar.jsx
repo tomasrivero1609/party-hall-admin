@@ -24,14 +24,17 @@ const Navbar = () => {
   }, []);
 
   // Usuario específico que puede ver métricas
-  const canViewMetrics = ["admin", "subadmin"].includes(userRole) || 
-                        userEmail === "vaniestilo@gmail.com";
+  const canViewMetrics = userRole === "admin" || userEmail === "vaniestilo@gmail.com";
 
   const navItems = [
-    ...(session && ["admin", "subadmin"].includes(userRole) ? [
+    ...(session && userRole === "admin" ? [
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
       { href: "/create-event", label: "Crear Evento", icon: Plus },
       { href: "/dashboard", label: "Métricas", icon: Menu },
+    ] : []),
+    ...(session && userRole === "subadmin" ? [
+      { href: "/eventsdetails", label: "Eventos", icon: Calendar },
+      { href: "/create-event", label: "Crear Evento", icon: Plus },
     ] : []),
     ...(session && userRole === "user" ? [
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
