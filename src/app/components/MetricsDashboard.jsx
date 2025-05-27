@@ -145,7 +145,7 @@ const MetricsDashboard = () => {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
         {Object.entries(metricsByCurrency).map(([currency, data], index) => {
           const currencySymbol = currency === "USD" ? "U$S" : "$";
           const delay = index * 100;
@@ -158,8 +158,8 @@ const MetricsDashboard = () => {
                   value={data.totalEvents.toLocaleString("es-AR")}
                   icon={Calendar}
                   color="primary"
-                  trend="+12%"
-                  subtitle="Este mes"
+                  trend=""
+                  subtitle=""
                 />
               </div>
               
@@ -169,7 +169,7 @@ const MetricsDashboard = () => {
                   value={`${currencySymbol}${data.totalPayments.toLocaleString("es-AR")}`}
                   icon={CreditCard}
                   color="success"
-                  trend="+8%"
+                  trend=""
                   subtitle="Total recaudado"
                 />
               </div>
@@ -180,25 +180,12 @@ const MetricsDashboard = () => {
                   value={`${currencySymbol}${data.totalPendingBalance.toLocaleString("es-AR")}`}
                   icon={DollarSign}
                   color={data.totalPendingBalance > 0 ? "warning" : "success"}
-                  trend={data.totalPendingBalance > 0 ? "-5%" : "0%"}
                   subtitle="Por cobrar"
                 />
               </div>
             </React.Fragment>
           );
         })}
-        
-        {/* Additional summary card */}
-        <div style={{ animationDelay: '300ms' }}>
-          <MetricCard
-            title="Clientes Activos"
-            value="47"
-            icon={Users}
-            color="primary"
-            trend="+15%"
-            subtitle="Este trimestre"
-          />
-        </div>
       </div>
 
       {/* Summary Section */}
@@ -229,26 +216,6 @@ const MetricsDashboard = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 animate-slide-up" style={{ animationDelay: '500ms' }}>
-          <h3 className="text-xl font-bold text-gray-900 mb-4 font-display">
-            Estadísticas Rápidas
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
-              <span className="text-green-700 font-medium">Eventos Completados</span>
-              <span className="text-green-800 font-bold">89%</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
-              <span className="text-blue-700 font-medium">Satisfacción Cliente</span>
-              <span className="text-blue-800 font-bold">4.8/5</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-xl">
-              <span className="text-yellow-700 font-medium">Tiempo Promedio</span>
-              <span className="text-yellow-800 font-bold">2.5h</span>
-            </div>
           </div>
         </div>
       </div>

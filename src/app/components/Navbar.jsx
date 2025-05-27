@@ -8,6 +8,7 @@ import { Menu, X, Calendar, Plus, Home, LogOut, LogIn, User } from "lucide-react
 const Navbar = () => {
   const { data: session } = useSession();
   const userRole = session?.user?.role || "user";
+  const userEmail = session?.user?.email;
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -22,13 +23,21 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Usuario específico que puede ver métricas
+  const canViewMetrics = ["admin", "subadmin"].includes(userRole) || 
+                        userEmail === "vaniestilo@gmail.com";
+
   const navItems = [
     ...(session && ["admin", "subadmin"].includes(userRole) ? [
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
       { href: "/create-event", label: "Crear Evento", icon: Plus },
+      { href: "/dashboard", label: "Métricas", icon: Menu },
     ] : []),
     ...(session && userRole === "user" ? [
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
+      ...(userEmail === "vaniestilo@gmail.com" ? [
+        { href: "/dashboard", label: "Métricas", icon: Menu },
+      ] : []),
     ] : []),
     ...(session ? [
       { href: "/calendar", label: "Calendario", icon: Calendar },
