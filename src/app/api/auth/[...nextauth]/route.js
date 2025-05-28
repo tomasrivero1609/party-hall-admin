@@ -39,6 +39,12 @@ const authOptions = {
               password: "beleneventos528",
               role: "user", // User tiene acceso mínimo
             },
+                        {
+              id: 5,
+              email: "tomasrivero1609@gmail.com",
+              password: "ten20102010",
+              role: "admin", // User tiene acceso mínimo
+            },
           ];
       
           const user = users.find(
