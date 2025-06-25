@@ -72,3 +72,10 @@ enum PaymentType {
   TAXES            // Impuestos
   OTHER            // Otros gastos
 }
+
+model NotificationRecipient {
+  id      Int    @id @default(autoincrement())
+  name    String
+  phone   String  // Guardar en formato internacional, ej: 5491112345678
+  category String? // Tipo/categoría: DJ, Mozo, Encargado, etc.
+}

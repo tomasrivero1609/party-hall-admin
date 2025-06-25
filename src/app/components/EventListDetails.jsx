@@ -33,7 +33,23 @@ import {
 const WhatsAppModal = ({ open, onClose, event }) => {
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [recipients, setRecipients] = useState([]);
+  const [selectedRecipient, setSelectedRecipient] = useState("");
+  const [newRecipientName, setNewRecipientName] = useState("");
+  const [addingRecipient, setAddingRecipient] = useState(false);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
   const inputRef = useRef();
+
+  // Fetch recipients
+  useEffect(() => {
+    if (open) {
+      setLoadingRecipients(true);
+      fetch("/api/notification-recipients")
+        .then(res => res.json())
+        .then(data => setRecipients(Array.isArray(data) ? data : []))
+        .finally(() => setLoadingRecipients(false));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && event) {
@@ -44,9 +60,44 @@ const WhatsAppModal = ({ open, onClose, event }) => {
         `Se ha creado un nuevo evento: ${event.name}\nFecha: ${formattedDate}\nInvitados: ${event.guests}`
       );
       setPhone("");
+      setSelectedRecipient("");
       setTimeout(() => inputRef.current && inputRef.current.focus(), 100);
     }
   }, [open, event]);
+
+  // Cuando selecciona un destinatario, autocompletar el teléfono
+  useEffect(() => {
+    if (selectedRecipient) {
+      const found = recipients.find(r => r.id === parseInt(selectedRecipient));
+      if (found) setPhone(found.phone);
+    }
+  }, [selectedRecipient, recipients]);
+
+  const handleAddRecipient = async () => {
+    if (!newRecipientName || !phone) return;
+    setAddingRecipient(true);
+    const res = await fetch("/api/notification-recipients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newRecipientName, phone }),
+    });
+    if (res.ok) {
+      const newRec = await res.json();
+      setRecipients([...recipients, newRec]);
+      setSelectedRecipient(newRec.id.toString());
+      setNewRecipientName("");
+    }
+    setAddingRecipient(false);
+  };
+
+  const handleDeleteRecipient = async (id) => {
+    await fetch(`/api/notification-recipients?id=${id}`, { method: "DELETE" });
+    setRecipients(recipients.filter(r => r.id !== id));
+    if (selectedRecipient === id.toString()) {
+      setSelectedRecipient("");
+      setPhone("");
+    }
+  };
 
   if (!open) return null;
 
@@ -61,16 +112,61 @@ const WhatsAppModal = ({ open, onClose, event }) => {
         </button>
         <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">Notificar por WhatsApp</h3>
         <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2">Número de WhatsApp</label>
+          <label className="block text-gray-700 font-medium mb-2">Destinatario guardado</label>
+          <select
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg mb-2"
+            value={selectedRecipient}
+            onChange={e => setSelectedRecipient(e.target.value)}
+            disabled={loadingRecipients || recipients.length === 0}
+          >
+            <option value="">-- Selecciona un destinatario --</option>
+            {recipients.map(r => (
+              <option key={r.id} value={r.id}>{r.name} ({r.phone})</option>
+            ))}
+          </select>
+          {selectedRecipient && (
+            <button
+              className="text-xs text-red-500 ml-2 underline"
+              onClick={() => handleDeleteRecipient(selectedRecipient)}
+              type="button"
+            >
+              Eliminar destinatario
+            </button>
+          )}
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">O ingresa un número manualmente</label>
           <input
             ref={inputRef}
             type="tel"
             value={phone}
-            onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+            onChange={e => {
+              setPhone(e.target.value.replace(/\D/g, ""));
+              setSelectedRecipient("");
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
             placeholder="Ej: 5491112345678"
           />
-          <p className="text-xs text-gray-500 mt-1">Sin + ni espacios, solo números (ej: 5491112345678)</p>
+        </div>
+        <div className="mb-4 flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-gray-700 font-medium mb-2">Agregar nuevo destinatario</label>
+            <input
+              type="text"
+              value={newRecipientName}
+              onChange={e => setNewRecipientName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+              placeholder="Nombre del destinatario"
+            />
+          </div>
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition mt-6"
+            disabled={!newRecipientName || !phone || addingRecipient}
+            onClick={handleAddRecipient}
+            type="button"
+          >
+            Agregar
+          </button>
         </div>
         <div className="mb-6">
           <label className="block text-gray-700 font-medium mb-2">Mensaje</label>
