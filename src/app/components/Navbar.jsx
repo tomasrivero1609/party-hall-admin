@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Menu, X, Calendar, Plus, Home, LogOut, LogIn, User } from "lucide-react";
+import { Menu, X, Calendar, Plus, Home, LogOut, LogIn, User, Users } from "lucide-react";
 
 const Navbar = () => {
   const { data: session } = useSession();
@@ -31,10 +31,12 @@ const Navbar = () => {
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
       { href: "/create-event", label: "Crear Evento", icon: Plus },
       { href: "/dashboard", label: "Métricas", icon: Menu },
+      { href: "/recipients", label: "Destinatarios", icon: Users },
     ] : []),
     ...(session && userRole === "subadmin" ? [
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
       { href: "/create-event", label: "Crear Evento", icon: Plus },
+      { href: "/recipients", label: "Destinatarios", icon: Users },
     ] : []),
     ...(session && userRole === "user" ? [
       { href: "/eventsdetails", label: "Eventos", icon: Calendar },
@@ -81,7 +83,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop navigation */}
-          <div className="hidden sm:flex items-center space-x-1">
+          <div className="hidden sm:flex items-center space-x-2">
             {session ? (
               <>
                 {navItems.map((item) => {
@@ -90,17 +92,16 @@ const Navbar = () => {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 font-medium group"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 font-medium group whitespace-nowrap"
                     >
                       <Icon className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                       <span>{item.label}</span>
                     </Link>
                   );
                 })}
-                
                 {/* User menu */}
-                <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
-                  <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 ml-6 pl-4 border-l border-gray-200">
+                  <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                       <User className="h-4 w-4 text-white" />
                     </div>
@@ -108,10 +109,9 @@ const Navbar = () => {
                       {session.user?.name || session.user?.email}
                     </span>
                   </div>
-                  
                   <button
                     onClick={() => signOut()}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-300 font-medium group"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-300 font-medium group ml-2 mr-2"
                   >
                     <LogOut className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                     <span>Cerrar Sesión</span>
@@ -121,7 +121,7 @@ const Navbar = () => {
             ) : (
               <button
                 onClick={() => signIn()}
-                className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-medium group"
+                className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-medium group"
               >
                 <LogIn className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
                 <span>Iniciar Sesión</span>
