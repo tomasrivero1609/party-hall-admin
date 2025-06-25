@@ -49,6 +49,8 @@ model Payment {
   eventId                 Int
   event                   Event    @relation(fields: [eventId], references: [id])
   pricePerPlateAtPayment  Float?
+  paymentType             PaymentType @default(EVENT_PAYMENT)
+  description             String?
 }
 
 model EventType {
@@ -61,4 +63,12 @@ model EventType {
 enum CurrencySymbol {
   ARS // $
   USD // U$S
+}
+
+enum PaymentType {
+  EVENT_PAYMENT    // Pago normal del evento (afecta remainingBalance)
+  RESERVATION      // Pago de reserva
+  VENUE_RENTAL     // Alquiler del local
+  TAXES            // Impuestos
+  OTHER            // Otros gastos
 }

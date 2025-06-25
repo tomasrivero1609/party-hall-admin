@@ -20,6 +20,7 @@ const EditEventModal = ({ event, onClose, onUpdate }) => {
     observations: event.observations || "",
     menu: event.menu || "",
     fileUrls: event.fileUrls || [],
+    date: event.date ? event.date.slice(0, 10) : "", // formato YYYY-MM-DD
   });
 
   const [loading, setLoading] = useState(false);
@@ -37,14 +38,15 @@ const EditEventModal = ({ event, onClose, onUpdate }) => {
   const validateForm = () => {
     const newErrors = {};
     
+    if (!editedEvent.date) {
+      newErrors.date = "La fecha es obligatoria";
+    }
     if (!editedEvent.guests || editedEvent.guests < 1) {
       newErrors.guests = "La cantidad de invitados debe ser mayor a 0";
     }
-    
     if (!editedEvent.pricePerPlate || editedEvent.pricePerPlate < 0) {
       newErrors.pricePerPlate = "El precio por plato debe ser mayor o igual a 0";
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -143,6 +145,7 @@ const EditEventModal = ({ event, onClose, onUpdate }) => {
           observations: editedEvent.observations || null,
           menu: editedEvent.menu || null,
           fileUrls: editedEvent.fileUrls || [],
+          date: editedEvent.date,
         }),
       });
   
@@ -398,6 +401,19 @@ const EditEventModal = ({ event, onClose, onUpdate }) => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Fecha del evento */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Fecha del Evento</label>
+              <input
+                type="date"
+                name="date"
+                value={editedEvent.date}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+              />
+              {errors.date && <p className="text-red-500 text-sm mt-1">{errors.date}</p>}
             </div>
             </form>
           </div>

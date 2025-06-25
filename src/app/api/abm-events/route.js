@@ -153,6 +153,19 @@ export async function PUT(request) {
     const newRemainingBalance = platesRemaining * newPricePerPlate;
     const totalEventCost = (platesAlreadyPaid * oldPricePerPlate) + newRemainingBalance;
 
+    // Si se quiere cambiar la fecha, verificar que no esté ocupada por otro evento
+    if (data.date) {
+      const conflictingEvent = await prisma.event.findFirst({
+        where: {
+          date: new Date(data.date),
+          id: { not: eventId },
+        },
+      });
+      if (conflictingEvent) {
+        return Response.json({ error: `Fecha ocupada por "${conflictingEvent.name}"` }, { status: 400 });
+      }
+    }
+
     // 4. Actualizar el evento
     const updatedEvent = await prisma.event.update({
       where: { id: eventId },
@@ -165,6 +178,7 @@ export async function PUT(request) {
         observations: data.observations || null,
         menu: data.menu || null,
         fileUrls: data.fileUrls || [],
+        ...(data.date ? { date: new Date(data.date) } : {}),
       },
     });
 

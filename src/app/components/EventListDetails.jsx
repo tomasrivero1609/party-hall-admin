@@ -2,7 +2,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import EditEventModal from "./EditEventModal";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   TrashIcon,
   EnvelopeIcon,
@@ -30,6 +30,76 @@ import {
   ExclamationTriangleIcon as ExclamationTriangleIconSolid,
 } from "@heroicons/react/24/solid";
 
+const WhatsAppModal = ({ open, onClose, event }) => {
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const inputRef = useRef();
+
+  useEffect(() => {
+    if (open && event) {
+      const formattedDate = event.date && event.date.split("-").length === 3
+        ? `${event.date.split("-")[2]}/${event.date.split("-")[1]}/${event.date.split("-")[0]}`
+        : "Fecha no disponible";
+      setMessage(
+        `Se ha creado un nuevo evento: ${event.name}\nFecha: ${formattedDate}\nInvitados: ${event.guests}`
+      );
+      setPhone("");
+      setTimeout(() => inputRef.current && inputRef.current.focus(), 100);
+    }
+  }, [open, event]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative border border-gray-200 animate-scale-in">
+        <button
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+          onClick={onClose}
+        >
+          <XMarkIcon className="h-6 w-6" />
+        </button>
+        <h3 className="text-2xl font-bold mb-6 text-gray-800 text-center">Notificar por WhatsApp</h3>
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">Número de WhatsApp</label>
+          <input
+            ref={inputRef}
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value.replace(/\D/g, ""))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+            placeholder="Ej: 5491112345678"
+          />
+          <p className="text-xs text-gray-500 mt-1">Sin + ni espacios, solo números (ej: 5491112345678)</p>
+        </div>
+        <div className="mb-6">
+          <label className="block text-gray-700 font-medium mb-2">Mensaje</label>
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            rows={4}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-base resize-none"
+          />
+        </div>
+        <button
+          className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg font-semibold text-lg shadow hover:from-green-600 hover:to-green-700 transition"
+          disabled={!phone || !message}
+          onClick={() => {
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, "_blank");
+            onClose();
+          }}
+        >
+          <span className="inline-flex items-center gap-2 justify-center">
+            <PhoneIcon className="h-5 w-5" />
+            Abrir WhatsApp Web
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const EventList = ({ events: initialEvents }) => {
   const { data: session } = useSession();
   const userRole = session?.user?.role || "user";
@@ -46,6 +116,8 @@ const EventList = ({ events: initialEvents }) => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' o 'list'
   const [sortBy, setSortBy] = useState('date'); // 'date', 'name', 'total', 'status'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' o 'desc'
+  const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
+  const [whatsAppEvent, setWhatsAppEvent] = useState(null);
   
   const eventsPerPage = 6; // Óptimo para el diseño de cards
 
@@ -304,16 +376,17 @@ const EventList = ({ events: initialEvents }) => {
                   </Link>
 
                   {event.phone && (
-                    <a
-                      href={`https://wa.me/${"+549" + event.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hola, quería consultar sobre el evento: " + event.name)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3"
-                      onClick={() => setIsOpen(false)}
+                    <button
+                      onClick={() => {
+                        setWhatsAppEvent(event);
+                        setWhatsAppModalOpen(true);
+                        setIsOpen(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 flex items-center gap-3"
                     >
                       <PhoneIcon className="h-4 w-4" />
-                      WhatsApp
-                    </a>
+                      Notificar por WhatsApp
+                    </button>
                   )}
 
                   <div className="border-t border-gray-100 my-1" />
@@ -720,261 +793,263 @@ const EventList = ({ events: initialEvents }) => {
         </>
       )}
 
-             {/* Modal de detalles mejorado */}
-       {isModalOpen && selectedEvent && (
-         <div className="fixed inset-0 z-[60] overflow-y-auto">
-           <div className="flex items-center justify-center min-h-screen px-4 py-8">
-             <div className="fixed inset-0 bg-black/70 backdrop-blur-md transition-all duration-300" onClick={closeDetailsModal}></div>
+      {/* Modal de detalles mejorado */}
+      {isModalOpen && selectedEvent && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 py-8">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-md transition-all duration-300" onClick={closeDetailsModal}></div>
 
-             <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all max-w-4xl w-full max-h-[85vh] overflow-hidden z-10 animate-scale-in my-8">
-                                {/* Header del modal */}
-                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white">
-                   <div className="flex items-start justify-between">
-                     <div className="flex items-start space-x-4 flex-1 min-w-0">
-                       <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center flex-shrink-0">
-                         <CalendarIcon className="h-6 w-6" />
-                       </div>
-                       <div className="flex-1 min-w-0">
-                         <h3 className="text-xl font-bold text-white mb-1 break-words">{selectedEvent.name}</h3>
-                         <p className="text-blue-100 text-sm">
-                           {selectedEvent.date && selectedEvent.date.split("-").length === 3
-                             ? `${selectedEvent.date.split("-")[2]}/${selectedEvent.date.split("-")[1]}/${selectedEvent.date.split("-")[0]}`
-                             : "Fecha no disponible"}
-                         </p>
-                       </div>
-                     </div>
-                     <button
-                       onClick={closeDetailsModal}
-                       className="modal-close-button w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ml-4"
-                       title="Cerrar modal"
-                     >
-                       <XMarkIcon className="h-6 w-6" />
-                     </button>
-                   </div>
+            <div className="relative bg-white rounded-2xl shadow-2xl transform transition-all max-w-4xl w-full max-h-[85vh] overflow-hidden z-10 animate-scale-in my-8">
+              {/* Header del modal */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-6 text-white">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <CalendarIcon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl font-bold text-white mb-1 break-words">{selectedEvent.name}</h3>
+                      <p className="text-blue-100 text-sm">
+                        {selectedEvent.date && selectedEvent.date.split("-").length === 3
+                          ? `${selectedEvent.date.split("-")[2]}/${selectedEvent.date.split("-")[1]}/${selectedEvent.date.split("-")[0]}`
+                          : "Fecha no disponible"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={closeDetailsModal}
+                    className="modal-close-button w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 flex-shrink-0 ml-4"
+                    title="Cerrar modal"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
 
-                   {/* Estado y tipo */}
-                   <div className="flex flex-wrap items-center gap-3 mt-4">
-                     <span className="modal-event-type inline-flex items-center px-4 py-2 rounded-full text-sm">
-                       {selectedEvent.eventType?.name || "Sin tipo"}
-                     </span>
-                     {(() => {
-                       const referenceDate = selectedEvent.lastPaymentDate || selectedEvent.date;
-                       const daysSinceLastActivity = referenceDate ? getDaysSince(referenceDate) : null;
-                       const isPending = daysSinceLastActivity >= 50;
-                       
-                       return isPending ? (
-                         <span className="modal-status-badge inline-flex items-center px-4 py-2 rounded-full text-sm bg-yellow-100 text-yellow-800 border-yellow-200">
-                           <ExclamationTriangleIconSolid className="h-4 w-4 mr-2" />
-                           Pendiente ({daysSinceLastActivity} días)
-                         </span>
-                       ) : (
-                         <span className="modal-status-badge inline-flex items-center px-4 py-2 rounded-full text-sm bg-green-100 text-green-800 border-green-200">
-                           <CheckCircleIconSolid className="h-4 w-4 mr-2" />
-                           Al día
-                         </span>
-                       );
-                     })()}
-                   </div>
-                 </div>
+                {/* Estado y tipo */}
+                <div className="flex flex-wrap items-center gap-3 mt-4">
+                  <span className="modal-event-type inline-flex items-center px-4 py-2 rounded-full text-sm">
+                    {selectedEvent.eventType?.name || "Sin tipo"}
+                  </span>
+                  {(() => {
+                    const referenceDate = selectedEvent.lastPaymentDate || selectedEvent.date;
+                    const daysSinceLastActivity = referenceDate ? getDaysSince(referenceDate) : null;
+                    const isPending = daysSinceLastActivity >= 50;
+                    
+                    return isPending ? (
+                      <span className="modal-status-badge inline-flex items-center px-4 py-2 rounded-full text-sm bg-yellow-100 text-yellow-800 border-yellow-200">
+                        <ExclamationTriangleIconSolid className="h-4 w-4 mr-2" />
+                        Pendiente ({daysSinceLastActivity} días)
+                      </span>
+                    ) : (
+                      <span className="modal-status-badge inline-flex items-center px-4 py-2 rounded-full text-sm bg-green-100 text-green-800 border-green-200">
+                        <CheckCircleIconSolid className="h-4 w-4 mr-2" />
+                        Al día
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
 
-               {/* Contenido del modal */}
-               <div className="overflow-y-auto max-h-[calc(85vh-180px)]">
-                 <div className="p-8">
-                   {/* Información principal en cards */}
-                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                     {/* Card de información básica */}
-                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-                       <div className="flex items-center mb-4">
-                         <CalendarIcon className="h-5 w-5 text-blue-600 mr-2" />
-                         <h4 className="font-semibold text-blue-900">Información del Evento</h4>
-                       </div>
-                       <div className="space-y-3">
-                         <div className="flex items-center">
-                           <UserGroupIcon className="h-4 w-4 text-blue-500 mr-2" />
-                           <span className="text-sm text-blue-700">{selectedEvent.guests} invitados</span>
-                         </div>
-                         <div className="flex items-center">
-                           <ClockIcon className="h-4 w-4 text-blue-500 mr-2" />
-                           <span className="text-sm text-blue-700">
-                             {formatToLocalTimeOnly(selectedEvent.startTime)} - {formatToLocalTimeOnly(selectedEvent.endTime)}
-                           </span>
-                         </div>
-                         {selectedEvent.address && (
-                           <div className="flex items-start">
-                             <MapPinIcon className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                             <span className="text-sm text-blue-700 break-words min-w-0 flex-1">{selectedEvent.address}</span>
-                           </div>
-                         )}
-                       </div>
-                     </div>
+              {/* Contenido del modal */}
+              <div className="overflow-y-auto max-h-[calc(85vh-180px)]">
+                <div className="p-8">
+                  {/* Información principal en cards */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    {/* Card de información básica */}
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                      <div className="flex items-center mb-4">
+                        <CalendarIcon className="h-5 w-5 text-blue-600 mr-2" />
+                        <h4 className="font-semibold text-blue-900">Información del Evento</h4>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center">
+                          <UserGroupIcon className="h-4 w-4 text-blue-500 mr-2" />
+                          <span className="text-sm text-blue-700">{selectedEvent.guests} invitados</span>
+                        </div>
+                        <div className="flex items-center">
+                          <ClockIcon className="h-4 w-4 text-blue-500 mr-2" />
+                          <span className="text-sm text-blue-700">
+                            {formatToLocalTimeOnly(selectedEvent.startTime)} - {formatToLocalTimeOnly(selectedEvent.endTime)}
+                          </span>
+                        </div>
+                        {selectedEvent.address && (
+                          <div className="flex items-start">
+                            <MapPinIcon className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-blue-700 break-words min-w-0 flex-1">{selectedEvent.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                     {/* Card financiera */}
-                     <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-                       <div className="flex items-center mb-4">
-                         <CurrencyDollarIcon className="h-5 w-5 text-green-600 mr-2" />
-                         <h4 className="font-semibold text-green-900">Información Financiera</h4>
-                       </div>
-                       <div className="space-y-4">
-                         <div>
-                           <p className="text-xs text-green-600 uppercase tracking-wide">Total del Evento</p>
-                           <p className="text-2xl font-bold text-green-900">
-                             {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.total)}
-                           </p>
-                         </div>
-                         <div>
-                           <p className="text-xs text-green-600 uppercase tracking-wide">Saldo Restante</p>
-                           <p className={`text-xl font-bold ${selectedEvent.remainingBalance > 0 ? 'text-red-600' : 'text-green-700'}`}>
-                             {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.remainingBalance)}
-                           </p>
-                         </div>
-                         <div>
-                           <p className="text-xs text-green-600 uppercase tracking-wide">Precio por Plato</p>
-                           <p className="text-lg font-semibold text-green-800">
-                             {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.pricePerPlate)}
-                           </p>
-                         </div>
-                       </div>
-                     </div>
+                    {/* Card financiera */}
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                      <div className="flex items-center mb-4">
+                        <CurrencyDollarIcon className="h-5 w-5 text-green-600 mr-2" />
+                        <h4 className="font-semibold text-green-900">Información Financiera</h4>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs text-green-600 uppercase tracking-wide">Total del Evento</p>
+                          <p className="text-2xl font-bold text-green-900">
+                            {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.total)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-green-600 uppercase tracking-wide">Saldo Restante</p>
+                          <p className={`text-xl font-bold ${selectedEvent.remainingBalance > 0 ? 'text-red-600' : 'text-green-700'}`}>
+                            {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.remainingBalance)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-green-600 uppercase tracking-wide">Precio por Plato</p>
+                          <p className="text-lg font-semibold text-green-800">
+                            {currencySymbolMap[selectedEvent.currency]}{formatNumber(selectedEvent.pricePerPlate)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
-                                            {/* Card de contacto */}
-                       <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-                         <div className="flex items-center mb-4">
-                           <PhoneIcon className="h-5 w-5 text-purple-600 mr-2" />
-                           <h4 className="font-semibold text-purple-900">Datos de Contacto</h4>
-                         </div>
-                         <div className="space-y-3">
-                           {selectedEvent.phone && (
-                             <div className="flex items-start">
-                               <PhoneIcon className="h-4 w-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                               <a href={`tel:${selectedEvent.phone}`} className="text-sm text-purple-700 hover:text-purple-900 hover:underline break-all">
-                                 {selectedEvent.phone}
-                               </a>
-                             </div>
-                           )}
-                           {selectedEvent.email && (
-                             <div className="flex items-start">
-                               <EnvelopeIcon className="h-4 w-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
-                               <a href={`mailto:${selectedEvent.email}`} className="text-sm text-purple-700 hover:text-purple-900 hover:underline break-all min-w-0 flex-1">
-                                 {selectedEvent.email}
-                               </a>
-                             </div>
-                           )}
-                           {selectedEvent.seller?.name && (
-                             <div className="mt-4 pt-3 border-t border-purple-200">
-                               <p className="text-xs text-purple-600 uppercase tracking-wide">Vendedor Asignado</p>
-                               <p className="text-sm font-medium text-purple-800 break-words">{selectedEvent.seller.name}</p>
-                             </div>
-                           )}
-                         </div>
-                       </div>
-                   </div>
+                    {/* Card de contacto */}
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                      <div className="flex items-center mb-4">
+                        <PhoneIcon className="h-5 w-5 text-purple-600 mr-2" />
+                        <h4 className="font-semibold text-purple-900">Datos de Contacto</h4>
+                      </div>
+                      <div className="space-y-3">
+                        {selectedEvent.phone && (
+                          <div className="flex items-start">
+                            <PhoneIcon className="h-4 w-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <a href={`tel:${selectedEvent.phone}`} className="text-sm text-purple-700 hover:text-purple-900 hover:underline break-all">
+                              {selectedEvent.phone}
+                            </a>
+                          </div>
+                        )}
+                        {selectedEvent.email && (
+                          <div className="flex items-start">
+                            <EnvelopeIcon className="h-4 w-4 text-purple-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <a href={`mailto:${selectedEvent.email}`} className="text-sm text-purple-700 hover:text-purple-900 hover:underline break-all min-w-0 flex-1">
+                              {selectedEvent.email}
+                            </a>
+                          </div>
+                        )}
+                        {selectedEvent.seller?.name && (
+                          <div className="mt-4 pt-3 border-t border-purple-200">
+                            <p className="text-xs text-purple-600 uppercase tracking-wide">Vendedor Asignado</p>
+                            <p className="text-sm font-medium text-purple-800 break-words">{selectedEvent.seller.name}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                   {/* Secciones adicionales */}
-                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            {/* Menú y observaciones */}
-                       <div className="space-y-6">
-                         {selectedEvent.menu && (
-                           <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                             <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                               <svg className="h-5 w-5 text-gray-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                               </svg>
-                               Menú del Evento
-                             </h4>
-                             <div className="bg-white rounded-lg p-4 border border-gray-200">
-                               <p className="text-gray-700 whitespace-pre-wrap break-words">{selectedEvent.menu}</p>
-                             </div>
-                           </div>
-                         )}
+                  {/* Secciones adicionales */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Menú y observaciones */}
+                    <div className="space-y-6">
+                      {selectedEvent.menu && (
+                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                            <svg className="h-5 w-5 text-gray-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Menú del Evento
+                          </h4>
+                          <div className="bg-white rounded-lg p-4 border border-gray-200">
+                            <p className="text-gray-700 whitespace-pre-wrap break-words">{selectedEvent.menu}</p>
+                          </div>
+                        </div>
+                      )}
 
-                         {selectedEvent.observations && (
-                           <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                             <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                               <svg className="h-5 w-5 text-gray-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                               </svg>
-                               Observaciones
-                             </h4>
-                             <div className="bg-white rounded-lg p-4 border border-gray-200">
-                               <p className="text-gray-700 whitespace-pre-wrap break-words">{selectedEvent.observations}</p>
-                             </div>
-                           </div>
-                         )}
-                       </div>
+                      {selectedEvent.observations && (
+                        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                          <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                            <svg className="h-5 w-5 text-gray-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Observaciones
+                          </h4>
+                          <div className="bg-white rounded-lg p-4 border border-gray-200">
+                            <p className="text-gray-700 whitespace-pre-wrap break-words">{selectedEvent.observations}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                     {/* Archivos adjuntos */}
-                     {selectedEvent.fileUrls && selectedEvent.fileUrls.length > 0 && (
-                       <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                         <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
-                           <svg className="h-5 w-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                           </svg>
-                           Archivos Adjuntos
-                         </h4>
-                         <div className="space-y-3">
-                           {selectedEvent.fileUrls.map((url, index) => {
-                             const fileName = url.split("/").pop();
-                             const fileType = fileName.split(".").pop().toUpperCase();
-                             return (
-                               <a
-                                 key={index}
-                                 href={url}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                                 className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
-                               >
-                                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200">
-                                   <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                   </svg>
-                                 </div>
-                                 <div className="flex-1">
-                                   <p className="text-sm font-medium text-gray-900 group-hover:text-blue-900">{fileName}</p>
-                                   <p className="text-xs text-gray-500">{fileType}</p>
-                                 </div>
-                                 <svg className="h-4 w-4 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                 </svg>
-                               </a>
-                             );
-                           })}
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                 </div>
-               </div>
+                    {/* Archivos adjuntos */}
+                    {selectedEvent.fileUrls && selectedEvent.fileUrls.length > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                        <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                          <svg className="h-5 w-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                          Archivos Adjuntos
+                        </h4>
+                        <div className="space-y-3">
+                          {selectedEvent.fileUrls.map((url, index) => {
+                            const fileName = url.split("/").pop();
+                            const fileType = fileName.split(".").pop().toUpperCase();
+                            return (
+                              <a
+                                key={index}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 group"
+                              >
+                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200">
+                                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-900 group-hover:text-blue-900">{fileName}</p>
+                                  <p className="text-xs text-gray-500">{fileType}</p>
+                                </div>
+                                <svg className="h-4 w-4 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-               {/* Footer del modal */}
-               <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                 <div className="text-sm text-gray-500 order-2 sm:order-1">
-                   Evento creado el {new Date(selectedEvent.createdAt || selectedEvent.date).toLocaleDateString("es-AR")}
-                 </div>
-                 <div className="flex flex-col sm:flex-row gap-3 order-1 sm:order-2">
-                   <button
-                     onClick={closeDetailsModal}
-                     className="px-6 py-2.5 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all duration-200 flex items-center justify-center"
-                   >
-                     Cerrar
-                   </button>
-                   {userRole === "admin" && (
-                     <button
-                       onClick={() => {
-                         openEditModal(selectedEvent);
-                         closeDetailsModal();
-                       }}
-                       className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center"
-                     >
-                       <PencilIcon className="h-4 w-4 mr-2" />
-                       Editar Evento
-                     </button>
-                   )}
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       )}
+              {/* Footer del modal */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div className="text-sm text-gray-500 order-2 sm:order-1">
+                  Evento creado el {new Date(selectedEvent.createdAt || selectedEvent.date).toLocaleDateString("es-AR")}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 order-1 sm:order-2">
+                  <button
+                    onClick={closeDetailsModal}
+                    className="px-6 py-2.5 bg-gray-200 text-gray-800 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all duration-200 flex items-center justify-center"
+                  >
+                    Cerrar
+                  </button>
+                  {userRole === "admin" && (
+                    <button
+                      onClick={() => {
+                        openEditModal(selectedEvent);
+                        closeDetailsModal();
+                      }}
+                      className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center"
+                    >
+                      <PencilIcon className="h-4 w-4 mr-2" />
+                      Editar Evento
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <WhatsAppModal open={whatsAppModalOpen} onClose={() => setWhatsAppModalOpen(false)} event={whatsAppEvent} />
     </div>
   );
 };

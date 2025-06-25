@@ -18,6 +18,9 @@ export async function GET(request) {
         include: {
           event: true, // Incluye el evento relacionado
         },
+        orderBy: {
+          date: 'desc', // Ordenar por fecha descendente
+        },
       });
 
       // También obtener la moneda del evento
@@ -36,6 +39,9 @@ export async function GET(request) {
         include: {
           event: true,
         },
+        orderBy: {
+          date: 'desc', // Ordenar por fecha descendente
+        },
       });
 
       return Response.json({ payments }); // En este caso, solo devolvemos pagos
@@ -45,6 +51,7 @@ export async function GET(request) {
     return Response.json({ error: "Error interno del servidor" }, { status: 500 });
   }
 }
+
 export async function POST(request) {
   try {
     const data = await request.json();
@@ -52,7 +59,7 @@ export async function POST(request) {
     console.log("Datos recibidos:", data); // Depuración
 
     // Validar datos básicamente
-    if (!data.eventId || !data.amount || !data.payerName || !data.date) {
+    if (!data.eventId || !data.amount || !data.payerName || !data.date || !data.paymentType) {
       return Response.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
     }
 
@@ -74,9 +81,9 @@ export async function POST(request) {
       return Response.json({ error: 'Evento no encontrado' }, { status: 404 });
     }
 
-    // Validar que el monto no exceda el saldo restante
-    if (amount > event.remainingBalance) {
-      return Response.json({ error: 'El monto excede el saldo restante' }, { status: 400 });
+    // Solo validar el saldo restante si es un pago del evento
+    if (data.paymentType === 'EVENT_PAYMENT' && amount > event.remainingBalance) {
+      return Response.json({ error: 'El monto excede el saldo restante del evento' }, { status: 400 });
     }
 
     // Crear el pago
@@ -85,23 +92,26 @@ export async function POST(request) {
         amount,
         payerName: data.payerName,
         date: data.date,
-        eventId: parseInt(data.eventId), // ✅ corregido
-        pricePerPlateAtPayment: event.pricePerPlate,
+        eventId: parseInt(data.eventId),
+        paymentType: data.paymentType,
+        description: data.description || null,
+        pricePerPlateAtPayment: data.paymentType === 'EVENT_PAYMENT' ? event.pricePerPlate : null,
       },
     });
 
     console.log("Pago creado:", payment); // Depuración
 
-    // Actualizar el saldo restante y la fecha del último pago del evento
-    await prisma.event.update({
-      where: { id: parseInt(data.eventId) },
-      data: {
-        remainingBalance: event.remainingBalance - amount,
-        lastPaymentDate: new Date(), // Actualizar la fecha del último pago
-      },
-    });
-
-    console.log("Saldo y fecha del último pago actualizados"); // Depuración
+    // Solo actualizar el saldo restante si es un pago del evento
+    if (data.paymentType === 'EVENT_PAYMENT') {
+      await prisma.event.update({
+        where: { id: parseInt(data.eventId) },
+        data: {
+          remainingBalance: event.remainingBalance - amount,
+          lastPaymentDate: new Date(), // Actualizar la fecha del último pago
+        },
+      });
+      console.log("Saldo y fecha del último pago actualizados"); // Depuración
+    }
 
     return Response.json(payment, { status: 201 });
   } catch (error) {

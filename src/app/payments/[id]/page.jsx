@@ -14,6 +14,8 @@ const paymentSchema = z.object({
     .refine((val) => parseFloat(val) > 0, "El monto debe ser mayor a cero"),
   payerName: z.string().min(1, "El nombre del pagador es obligatorio"),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe estar en formato YYYY-MM-DD"),
+  paymentType: z.string().min(1, "El tipo de pago es obligatorio"),
+  description: z.string().optional(),
 });
 
 export default function PaymentForm() {
@@ -25,6 +27,8 @@ export default function PaymentForm() {
     amount: "",
     payerName: "",
     date: "",
+    paymentType: "EVENT_PAYMENT",
+    description: "",
   });
 
   const [lastPaymentData, setLastPaymentData] = useState(null);
@@ -70,7 +74,7 @@ export default function PaymentForm() {
       setFormData((prev) => ({ ...prev, [name]: numericValue }));
       e.target.value = formatAmount(numericValue);
 
-      if (pricePerPlate && !isNaN(pricePerPlate)) {
+      if (pricePerPlate && !isNaN(pricePerPlate) && formData.paymentType === 'EVENT_PAYMENT') {
         const amount = parseFloat(numericValue);
         const plates = Math.floor(amount / pricePerPlate);
         setPlatesCovered(plates);
@@ -79,6 +83,14 @@ export default function PaymentForm() {
       }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+      
+      if (name === "paymentType" && value === 'EVENT_PAYMENT' && pricePerPlate && formData.amount) {
+        const amount = parseFloat(formData.amount);
+        const plates = Math.floor(amount / pricePerPlate);
+        setPlatesCovered(plates);
+      } else if (name === "paymentType" && value !== 'EVENT_PAYMENT') {
+        setPlatesCovered(0);
+      }
     }
   };
 
@@ -98,7 +110,14 @@ export default function PaymentForm() {
       if (response.ok) {
         setLastPaymentData({ ...formData, eventName });
         setShowSuccessMessage(true);
-        setFormData({ eventId: id, amount: "", payerName: "", date: "" });
+        setFormData({ 
+          eventId: id, 
+          amount: "", 
+          payerName: "", 
+          date: "", 
+          paymentType: "EVENT_PAYMENT",
+          description: "" 
+        });
         setErrors({});
         setPlatesCovered(0);
       } else {
@@ -128,6 +147,17 @@ export default function PaymentForm() {
     return `${symbol}${new Intl.NumberFormat("es-AR").format(numericValue)}`;
   };
 
+  const getPaymentTypeLabel = (type) => {
+    const types = {
+      EVENT_PAYMENT: "Pago del Evento",
+      RESERVATION: "Reserva",
+      VENUE_RENTAL: "Alquiler del Local",
+      TAXES: "Impuestos",
+      OTHER: "Otros"
+    };
+    return types[type] || type;
+  };
+
   const generateReceipt = () => {
     if (!lastPaymentData) return;
     const doc = new jsPDF();
@@ -154,11 +184,16 @@ export default function PaymentForm() {
 
     const data = [
       ["Evento:", lastPaymentData.eventName],
+      ["Tipo de Pago:", getPaymentTypeLabel(lastPaymentData.paymentType)],
       ["Monto:", `${symbol}${lastPaymentData.amount}`],
       ["Monto en letras:", `${amountText} ${currencyText}`],
       ["Pagador:", lastPaymentData.payerName],
       ["Fecha:", lastPaymentData.date],
     ];
+
+    if (lastPaymentData.description) {
+      data.push(["Descripción:", lastPaymentData.description]);
+    }
 
     doc.setFontSize(14);
     doc.setTextColor("#2d3748");
@@ -215,6 +250,23 @@ export default function PaymentForm() {
 
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">Tipo de Pago</label>
+          <select
+            name="paymentType"
+            value={formData.paymentType}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+          >
+            <option value="EVENT_PAYMENT">Pago del Evento</option>
+            <option value="RESERVATION">Reserva</option>
+            <option value="VENUE_RENTAL">Alquiler del Local</option>
+            <option value="TAXES">Impuestos</option>
+            <option value="OTHER">Otros</option>
+          </select>
+          {errors.paymentType && <p className="text-red-500 text-sm">{errors.paymentType}</p>}
+        </div>
+
+        <div className="mb-4">
           <label className="block text-gray-700 font-medium mb-2">Monto del Pago</label>
           <input
             type="text"
@@ -225,7 +277,7 @@ export default function PaymentForm() {
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-right"
           />
           {errors.amount && <p className="text-red-500 text-sm">{errors.amount}</p>}
-          {!isNaN(platesCovered) && platesCovered > 0 && (
+          {!isNaN(platesCovered) && platesCovered > 0 && formData.paymentType === 'EVENT_PAYMENT' && (
             <p className="text-sm text-gray-600 mt-1">
               Este monto cubre aproximadamente <strong>{platesCovered}</strong> plato(s)
             </p>
@@ -243,6 +295,19 @@ export default function PaymentForm() {
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
           />
           {errors.payerName && <p className="text-red-500 text-sm">{errors.payerName}</p>}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">Descripción (Opcional)</label>
+          <textarea
+            name="description"
+            placeholder="Descripción del pago (ej: pago parcial, adelanto, etc.)"
+            value={formData.description}
+            onChange={handleChange}
+            rows="3"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+          />
+          {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
         </div>
 
         <div className="mb-4">

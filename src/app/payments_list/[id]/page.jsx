@@ -13,8 +13,13 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  BuildingOfficeIcon,
+  DocumentTextIcon,
+  HandRaisedIcon
 } from "@heroicons/react/24/outline";
+import { jsPDF } from "jspdf";
+import getAmountInWords from "../../convertidor";
 
 const PaymentListById = () => {
   const [payments, setPayments] = useState([]);
@@ -62,6 +67,17 @@ const PaymentListById = () => {
     return `${symbol}${amount.toLocaleString("es-AR")}`;
   };
 
+  const getPaymentTypeInfo = (paymentType) => {
+    const types = {
+      EVENT_PAYMENT: { label: "Pago Evento", color: "bg-blue-100 text-blue-800", icon: CreditCardIcon },
+      RESERVATION: { label: "Reserva", color: "bg-yellow-100 text-yellow-800", icon: HandRaisedIcon },
+      VENUE_RENTAL: { label: "Alquiler Local", color: "bg-purple-100 text-purple-800", icon: BuildingOfficeIcon },
+      TAXES: { label: "Impuestos", color: "bg-red-100 text-red-800", icon: DocumentTextIcon },
+      OTHER: { label: "Otros", color: "bg-gray-100 text-gray-800", icon: CreditCardIcon }
+    };
+    return types[paymentType] || types.OTHER;
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = payments.slice(indexOfFirstItem, indexOfLastItem);
@@ -71,16 +87,27 @@ const PaymentListById = () => {
   };
 
   const totalPages = Math.ceil(payments.length / itemsPerPage);
+  
+  // Calcular estadísticas separadas por tipo de pago
+  const eventPayments = payments.filter(p => p.paymentType === 'EVENT_PAYMENT');
+  const otherPayments = payments.filter(p => p.paymentType !== 'EVENT_PAYMENT');
+  
   const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const eventPaymentsAmount = eventPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const otherPaymentsAmount = otherPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
   const averagePayment = payments.length > 0 ? totalAmount / payments.length : 0;
 
   // Calculate statistics
   const stats = {
     totalPayments: payments.length,
+    eventPayments: eventPayments.length,
+    otherPayments: otherPayments.length,
     totalAmount: totalAmount,
+    eventPaymentsAmount: eventPaymentsAmount,
+    otherPaymentsAmount: otherPaymentsAmount,
     averagePayment: averagePayment,
     remainingBalance: eventInfo ? eventInfo.remainingBalance : 0,
-    totalPlatesCovered: payments.reduce((sum, payment) => {
+    totalPlatesCovered: eventPayments.reduce((sum, payment) => {
       const price = parseFloat(payment.pricePerPlateAtPayment);
       return sum + (price && !isNaN(price) ? Math.floor(payment.amount / price) : 0);
     }, 0)
@@ -97,21 +124,28 @@ const PaymentListById = () => {
       [`Pagos del Evento: ${eventName}`],
       [`Fecha de exportación: ${new Date().toLocaleDateString("es-AR")}`],
       [],
-      ["Nombre del Pagador", "Monto", "Fecha", "Platos Cubiertos"],
+      ["Nombre del Pagador", "Monto", "Fecha", "Tipo de Pago", "Descripción", "Platos Cubiertos"],
       ...data.map((payment) => {
         const price = parseFloat(payment.pricePerPlateAtPayment);
-        const platesCovered = price && !isNaN(price) ? Math.floor(payment.amount / price) : 0;
+        const platesCovered = price && !isNaN(price) && payment.paymentType === 'EVENT_PAYMENT' ? Math.floor(payment.amount / price) : 0;
+        const typeInfo = getPaymentTypeInfo(payment.paymentType);
         return [
           payment.payerName,
           payment.amount,
           payment.date,
-          platesCovered,
+          typeInfo.label,
+          payment.description || "-",
+          payment.paymentType === 'EVENT_PAYMENT' ? platesCovered : "-",
         ];
       }),
       [],
       ["Resumen"],
       ["Total de pagos:", data.length],
+      ["Pagos del evento:", stats.eventPayments],
+      ["Otros pagos:", stats.otherPayments],
       ["Monto total:", formatCurrency(totalAmount)],
+      ["Monto pagos evento:", formatCurrency(stats.eventPaymentsAmount)],
+      ["Monto otros pagos:", formatCurrency(stats.otherPaymentsAmount)],
       ["Promedio por pago:", formatCurrency(averagePayment)],
     ];
 
@@ -144,9 +178,108 @@ const PaymentListById = () => {
       { wch: 15 },
       { wch: 15 },
       { wch: 20 },
+      { wch: 30 },
+      { wch: 20 },
     ];
 
     XLSX.writeFile(workbook, `pagos-${eventName.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.xlsx`);
+  };
+
+  const getPaymentTypeLabel = (type) => {
+    const types = {
+      EVENT_PAYMENT: "Pago del Evento",
+      RESERVATION: "Reserva",
+      VENUE_RENTAL: "Alquiler del Local",
+      TAXES: "Impuestos",
+      OTHER: "Otros"
+    };
+    return types[type] || type;
+  };
+
+  const generateReceiptPDF = (payment, eventName, currency) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 20;
+    let yPos = margin;
+
+    // Encabezado elegante
+    doc.setFontSize(26);
+    doc.setTextColor(44, 62, 80);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Recibo de Pago", pageWidth / 2, yPos, { align: "center" });
+    yPos += 12;
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text("Eventos Quilmes", pageWidth / 2, yPos, { align: "center" });
+    yPos += 10;
+
+    // Línea divisoria sutil
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.7);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 8;
+
+    // Datos del recibo en dos columnas
+    doc.setFontSize(12);
+    doc.setTextColor(44, 62, 80);
+    const labelX = margin;
+    const valueX = pageWidth / 2 + 10;
+    const rowHeight = 9;
+
+    // Corregir la moneda en letras
+    let amountText = getAmountInWords(payment.amount);
+    if (currency === "USD" && !amountText.toLowerCase().includes("dólar")) {
+      amountText += " dólares";
+    } else if (currency === "ARS" && !amountText.toLowerCase().includes("peso")) {
+      amountText += " pesos";
+    }
+    const symbol = currency === "USD" ? "U$S" : "$";
+
+    const data = [
+      ["Evento:", eventName],
+      ["Tipo de Pago:", getPaymentTypeLabel(payment.paymentType)],
+      ["Monto:", `${symbol}${payment.amount}`],
+      ["Monto en letras:", amountText],
+      ["Pagador:", payment.payerName],
+      ["Fecha:", payment.date],
+    ];
+    if (payment.description) {
+      data.push(["Descripción:", payment.description]);
+    }
+
+    data.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, labelX, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value), valueX, yPos);
+      yPos += rowHeight;
+    });
+
+    yPos += 4;
+    // Línea divisoria sutil
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+
+    // Mensaje de agradecimiento
+    doc.setFontSize(11);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'italic');
+    doc.text("Gracias por su pago. Este recibo es válido como comprobante.", pageWidth / 2, yPos, { align: "center" });
+    yPos += 18;
+
+    // Firmas
+    doc.setFontSize(12);
+    doc.setTextColor(44, 62, 80);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Firma del Pagador:", margin, yPos);
+    doc.line(margin, yPos + 5, pageWidth / 2 - margin, yPos + 5);
+    doc.text("Firma del Salón:", pageWidth / 2 + margin, yPos);
+    doc.line(pageWidth / 2 + margin, yPos + 5, pageWidth - margin, yPos + 5);
+
+    doc.save(`recibo_pago_${payment.id}.pdf`);
   };
 
   if (loading) {
@@ -203,6 +336,9 @@ const PaymentListById = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Pagos</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalPayments}</p>
+                <p className="text-xs text-gray-500">
+                  {stats.eventPayments} evento • {stats.otherPayments} otros
+                </p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <ChartBarIcon className="h-6 w-6 text-blue-600" />
@@ -215,6 +351,9 @@ const PaymentListById = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Monto Total</p>
                 <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalAmount)}</p>
+                <p className="text-xs text-gray-500">
+                  {formatCurrency(stats.eventPaymentsAmount)} evento
+                </p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
@@ -317,17 +456,28 @@ const PaymentListById = () => {
                       Monto ({currency})
                     </th>
                     <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Tipo de Pago
+                    </th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Descripción
+                    </th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Fecha
                     </th>
                     <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Platos Cubiertos
+                    </th>
+                    <th className="py-4 px-6 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Recibo
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {currentItems.map((payment) => {
                     const price = parseFloat(payment.pricePerPlateAtPayment);
-                    const platesCovered = price && !isNaN(price) ? Math.floor(payment.amount / price) : 0;
+                    const platesCovered = price && !isNaN(price) && payment.paymentType === 'EVENT_PAYMENT' ? Math.floor(payment.amount / price) : 0;
+                    const typeInfo = getPaymentTypeInfo(payment.paymentType);
+                    const TypeIcon = typeInfo.icon;
 
                     return (
                       <tr key={payment.id} className="hover:bg-gray-50 transition-colors duration-200">
@@ -342,11 +492,32 @@ const PaymentListById = () => {
                         <td className="py-4 px-6 text-sm font-semibold text-gray-900">
                           {formatCurrency(payment.amount)}
                         </td>
+                        <td className="py-4 px-6 text-sm">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${typeInfo.color}`}>
+                            <TypeIcon className="h-3 w-3 mr-1" />
+                            {typeInfo.label}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600">
+                          {payment.description || "-"}
+                        </td>
                         <td className="py-4 px-6 text-sm text-gray-600">{payment.date}</td>
                         <td className="py-4 px-6 text-sm">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {platesCovered} platos
-                          </span>
+                          {payment.paymentType === 'EVENT_PAYMENT' ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {platesCovered} platos
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-6 text-sm">
+                          <button
+                            className="inline-flex items-center px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                            onClick={() => generateReceiptPDF(payment, eventInfo?.name || "Evento", currency)}
+                          >
+                            Descargar Recibo
+                          </button>
                         </td>
                       </tr>
                     );
